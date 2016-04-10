@@ -1,4 +1,4 @@
-package hu.rits.remotewakeup;
+package hu.evolver.uhc;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

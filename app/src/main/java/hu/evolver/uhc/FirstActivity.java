@@ -1,4 +1,4 @@
-package hu.rits.remotewakeup;
+package hu.evolver.uhc;
 
 import android.app.KeyguardManager;
 import android.content.Context;
@@ -12,7 +12,7 @@ import android.widget.CheckBox;
 
 public class FirstActivity extends AppCompatActivity {
 
-    public final static String EXTRA_MESSAGE = "hu.rits.remotewakeup.MESSAGE";
+    public final static String EXTRA_MESSAGE = "hu.evolver.uhc.MESSAGE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

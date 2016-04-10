@@ -1,4 +1,4 @@
-package hu.rits.remotewakeup;
+package hu.evolver.uhc;
 
 import android.app.KeyguardManager;
 import android.app.Service;
@@ -11,12 +11,12 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 public class WakeupService extends Service implements SimpleTcpClient.Listener {
-    public static final String ACTION_CONNECT = "hu.rits.remotewakeup.ACTION_CONNECT";
-    public static final String ACTION_DISCONNECT = "hu.rits.remotewakeup.ACTION_DISCONNECT";
-    public static final String ACTION_TEST = "hu.rits.remotewakeup.ACTION_TEST"; // TODO remove later
+    public static final String ACTION_CONNECT = "hu.evolver.uhc.ACTION_CONNECT";
+    public static final String ACTION_DISCONNECT = "hu.evolver.uhc.ACTION_DISCONNECT";
+    public static final String ACTION_TEST = "hu.evolver.uhc.ACTION_TEST"; // TODO remove later
 
     private Handler handler;
-    private SimpleTcpClient simpleTcpClient = new SimpleTcpClient("10.0.1.2", 9998, this);
+    private SimpleTcpClient simpleTcpClient = new SimpleTcpClient("10.0.1.20", 11111, this);
 
     @NonNull
     static Intent getConnectIntent(Context context) {
