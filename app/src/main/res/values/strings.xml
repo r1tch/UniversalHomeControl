@@ -1,8 +1,9 @@
 <resources>
-    <string name="app_name">Remote Wakeup</string>
+    <string name="uhc">UHC</string>
 
     <string name="service_enabled">Service Enabled</string>
     <string name="remote_wakeup">Remote Wakeup</string>
     <string name="app_description">Connects to a TCP server to receive commands to wake the screen up. Can be used e.g for home automation screens, to only turn the tablet on when there\'s movement in the area.</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_main">UHC</string>
 </resources>
