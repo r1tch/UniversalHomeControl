@@ -9,15 +9,17 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <!-- TODO receiver for connectivity change and BOOT_COMPLETED -->
-    <!-- service android:name="WakeupService"></service -->
+    <!-- service android:name="UhcConnectivityService"></service -->
     <application
         android:allowBackup="true"
         android:icon="@mipmap/uhc_launcher"
         android:label="@string/uhc"
+        android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".FirstActivity"
-            android:label="@string/uhc">
+            android:name=".MainActivity"
+            android:label="@string/uhc"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,18 +28,17 @@
         </activity>
 
         <service
-            android:name=".WakeupService"
+            android:name=".UhcConnectivityService"
             android:enabled="true"
             android:exported="false" />
 
         <activity
-            android:name=".MainActivity"
-            android:label="@string/title_activity_main">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hu.evolver.uhc.MainActivity" />
         </activity>
     </application>
 

@@ -1,0 +1,15 @@
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- These settings headers are only used on tablets. -->
+
+    <header
+        android:fragment="hu.evolver.uhc.SettingsActivity$ConnectionPreferenceFragment"
+        android:icon="@drawable/ic_router_black_24dp"
+        android:title="@string/pref_header_connection" />
+
+    <header
+        android:fragment="hu.evolver.uhc.SettingsActivity$DisplayPreferenceFragment"
+        android:icon="@drawable/ic_smartphone_black_24dp"
+        android:title="@string/pref_header_display" />
+
+</preference-headers>

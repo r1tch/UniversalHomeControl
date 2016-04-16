@@ -22,11 +22,11 @@ public class SimpleTcpClient implements Runnable {
     private Listener listener;
 
     public interface Listener {
-        void onConnected();
+        void onTcpConnected();
 
-        void onMessage(final String message);
+        void onTcpMessage(final String message);
 
-        void onDisconnected(boolean perRequest);
+        void onTcpDisconnected(boolean perRequest);
     }
 
     public SimpleTcpClient(final String host, final int port, Listener listener) {
@@ -58,7 +58,7 @@ public class SimpleTcpClient implements Runnable {
             e.printStackTrace();
             return;
         }
-        listener.onDisconnected(true);
+        listener.onTcpDisconnected(true);
         thread = null;
     }
 
@@ -82,7 +82,7 @@ public class SimpleTcpClient implements Runnable {
             final boolean autoFlush = false;
             outStream = new PrintWriter(socket.getOutputStream(), autoFlush);
             state = State.CONNECTED;
-            listener.onConnected();
+            listener.onTcpConnected();
         } catch (UnknownHostException e) {
             Log.e("SimpleTcpClient", "Unknown host: " + host);
             e.printStackTrace();
@@ -91,7 +91,7 @@ public class SimpleTcpClient implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
             state = State.DISCONNECTED;
-            listener.onDisconnected(false);
+            listener.onTcpDisconnected(false);
             return;
         }
 
@@ -103,7 +103,7 @@ public class SimpleTcpClient implements Runnable {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 Log.d("SimpleTcpClient", "Got line: " + line);
-                listener.onMessage(line);
+                listener.onTcpMessage(line);
             }
 
 
@@ -116,7 +116,7 @@ public class SimpleTcpClient implements Runnable {
         }
         Log.d("SimpleTcpClient", "Host " + host + " disconnected.");
         state = State.DISCONNECTED;
-        listener.onDisconnected(false);
+        listener.onTcpDisconnected(false);
     }
 
     private enum State {
