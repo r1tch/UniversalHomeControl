@@ -2,7 +2,7 @@
 
     <EditTextPreference
         android:inputType="text"
-        android:key="pref_hostname"
+        android:key="pref_host"
         android:maxLines="1"
         android:selectAllOnFocus="true"
         android:singleLine="true"

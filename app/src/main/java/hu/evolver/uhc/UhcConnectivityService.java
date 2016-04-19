@@ -3,6 +3,7 @@ package hu.evolver.uhc;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -11,10 +12,13 @@ import android.util.Log;
 
 public class UhcConnectivityService extends Service implements SimpleTcpClient.Listener {
     public static final String ACTION_CONNECT = "hu.evolver.uhc.ACTION_CONNECT";
-    public static final String ACTION_DISCONNECT = "hu.evolver.uhc.ACTION_DISCONNECT";
+    public static final String ACTION_RECONNECT = "hu.evolver.uhc.ACTION_RECONNECT";
 
     private Handler handler;
-    private SimpleTcpClient simpleTcpClient = new SimpleTcpClient("10.0.1.20", 11111, this);
+    private final LocalBinder localBinder = new LocalBinder();
+    private SimpleTcpClient simpleTcpClient = new SimpleTcpClient(this);
+    private MainActivity mainActivity = null;   // docs say we should not, but we're careful, pinky-promise!
+    private PrefWrap prefWrap = null;
 
     @NonNull
     static Intent getConnectIntent(Context context) {
@@ -22,8 +26,16 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     }
 
     @NonNull
-    static Intent getDisconnectIntent(Context context) {
-        return getIntent(context, ACTION_DISCONNECT);
+    static Intent getReconnectIntent(Context context) {
+        return getIntent(context, ACTION_RECONNECT);
+    }
+
+    public void setMainActivity(MainActivity mainActivity) {
+        this.mainActivity = mainActivity;
+    }
+
+    public void unsetMainActivity() {
+        mainActivity = null;
     }
 
     @Override
@@ -36,9 +48,13 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("UhcConnectivityService", "onStartCommand - TODO start network thread here");
+        Log.d("UhcConnectivityService", "onStartCommand: " + intent.getAction());
 
-        simpleTcpClient.connect();
+        if (intent.getAction().equals(ACTION_RECONNECT))
+            simpleTcpClient.disconnect();
+
+        if (prefWrap.hasConnectionSettings())
+            simpleTcpClient.connect(prefWrap.host(), prefWrap.port());
 
         return START_STICKY;
     }
@@ -49,6 +65,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
         Log.d("UhcConnectivityService", "onCreate");
 
         handler = new Handler();
+        prefWrap = new PrefWrap(getApplicationContext());
     }
 
     @NonNull
@@ -61,14 +78,30 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     @Override
     public IBinder onBind(Intent intent) {
         Log.d("UhcConnectivityService", "onBind " + intent.toString());
-        // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        return localBinder;
     }
 
+    public void disconnect() {
+        simpleTcpClient.disconnect();
+    }
+
+    public class LocalBinder extends Binder {
+        UhcConnectivityService getService() {
+            return UhcConnectivityService.this;
+        }
+    }
+
+    ////////// thread functions ///////////
     @Override
     public void onTcpConnected() {
-        // TODO notify notification --> if activity exists, runonuithread connected()
         Log.d("UhcConnectivityService", "Connected.");
+        if (mainActivity != null)
+            mainActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mainActivity.onTcpConnected();
+                }
+            });
     }
 
     @Override
@@ -96,14 +129,14 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     }
 
     private void scheduleReconnect() {
-        if (handler == null)
+        if (handler == null || !prefWrap.hasConnectionSettings())
             return;
 
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 Log.d("UhcConnectivityService", "Reconnecting..");
-                simpleTcpClient.connect();
+                simpleTcpClient.connect(prefWrap.host(), prefWrap.port());
             }
         }, 1000);
 

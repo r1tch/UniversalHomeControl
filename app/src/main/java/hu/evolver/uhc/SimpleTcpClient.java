@@ -13,6 +13,12 @@ import java.net.UnknownHostException;
 import javax.net.SocketFactory;
 
 public class SimpleTcpClient implements Runnable {
+    private enum State {
+        DISCONNECTED,
+        CONNECTING,
+        CONNECTED
+    }
+
     private Thread thread;
     private Socket socket;
     private String host;
@@ -29,14 +35,17 @@ public class SimpleTcpClient implements Runnable {
         void onTcpDisconnected(boolean perRequest);
     }
 
-    public SimpleTcpClient(final String host, final int port, Listener listener) {
-        this.host = host;
-        this.port = port;
+    public SimpleTcpClient(Listener listener) {
+        this.host = "";
+        this.port = 0;
         this.listener = listener;
         this.state = State.DISCONNECTED;
     }
 
-    public void connect() {
+    public void connect(final String host, final int port) {
+        this.host = host;
+        this.port = port;
+
         if (state != State.DISCONNECTED)
             return;
 
@@ -95,9 +104,6 @@ public class SimpleTcpClient implements Runnable {
             return;
         }
 
-        outStream.println("Hello");
-        outStream.flush();
-
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
@@ -119,9 +125,4 @@ public class SimpleTcpClient implements Runnable {
         listener.onTcpDisconnected(false);
     }
 
-    private enum State {
-        DISCONNECTED,
-        CONNECTING,
-        CONNECTED
-    }
 }
