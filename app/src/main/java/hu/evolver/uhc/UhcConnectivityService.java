@@ -10,15 +10,19 @@ import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class UhcConnectivityService extends Service implements SimpleTcpClient.Listener {
     public static final String ACTION_CONNECT = "hu.evolver.uhc.ACTION_CONNECT";
     public static final String ACTION_RECONNECT = "hu.evolver.uhc.ACTION_RECONNECT";
 
-    private Handler handler;
+    private Handler handler = null;
     private final LocalBinder localBinder = new LocalBinder();
     private SimpleTcpClient simpleTcpClient = new SimpleTcpClient(this);
-    private MainActivity mainActivity = null;   // docs say we should not, but we're careful, pinky-promise!
+    private MainActivity mainActivity = null;   // docs say we should not store this ref, but we're careful, pinky-promise!
     private PrefWrap prefWrap = null;
+    private UhcState uhcState = new UhcState();
 
     @NonNull
     static Intent getConnectIntent(Context context) {
@@ -48,6 +52,9 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null)
+            return START_STICKY;  // ???
+
         Log.d("UhcConnectivityService", "onStartCommand: " + intent.getAction());
 
         if (intent.getAction().equals(ACTION_RECONNECT))
@@ -91,21 +98,29 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
         }
     }
 
+    public JSONObject getUhcStateFor(final String msg) {
+        return uhcState.get(msg);
+    }
+
     ////////// thread functions ///////////
+    private void dispatchToMainActivity(Runnable runnable) {
+        if (mainActivity != null)
+            mainActivity.runOnUiThread(runnable);
+    }
+
     @Override
     public void onTcpConnected() {
         Log.d("UhcConnectivityService", "Connected.");
-        if (mainActivity != null)
-            mainActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mainActivity.onTcpConnected();
-                }
-            });
+        dispatchToMainActivity(new Runnable() {
+            public void run() {
+                mainActivity.onTcpConnected();
+            }
+        });
     }
 
     @Override
     public void onTcpMessage(String message) {
+        // TODO ScreenWaker class
         if (message.startsWith("on")) {
             // deprecated - we used to target HoneyComb as well
             // KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
@@ -117,6 +132,24 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
                     | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
             wakeLock.acquire();
             wakeLock.release(); // we just want the screen to turn on, that's all
+        }
+        try {
+            final JSONObject jsonObject = new JSONObject(message);
+            final String msg = jsonObject.optString("msg");
+            if (msg == null) {
+                Log.e("UhcConnectivityService", "Missing msg from JSON:" + message);
+                return;
+            }
+
+            uhcState.newUpdate(msg, jsonObject);
+            dispatchToMainActivity(new Runnable() {
+                @Override
+                public void run() {
+                    mainActivity.onMsg(msg, jsonObject);
+                }
+            });
+        } catch (JSONException e) {
+            Log.e("UhcConnectivityService", "Unexpected JSON:" + message);
         }
     }
 

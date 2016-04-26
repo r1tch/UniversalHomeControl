@@ -24,7 +24,7 @@ public class SimpleTcpClient implements Runnable {
     private String host;
     private int port;
     private State state;
-    private PrintWriter outStream;
+    private PrintWriter outStream = null;
     private Listener listener;
 
     public interface Listener {
@@ -60,9 +60,12 @@ public class SimpleTcpClient implements Runnable {
         state = State.DISCONNECTED;
         thread.interrupt();
 
-        outStream.close();
+        if (outStream != null)
+            outStream.close();
+
         try {
-            socket.close();
+            if (socket != null)
+                socket.close();
         } catch (IOException e) {
             e.printStackTrace();
             return;
@@ -76,6 +79,9 @@ public class SimpleTcpClient implements Runnable {
     }
 
     public void send(final String message) {
+        if (outStream == null)
+            return;
+
         outStream.print(message);
         outStream.flush();
     }

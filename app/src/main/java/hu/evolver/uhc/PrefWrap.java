@@ -11,25 +11,25 @@ public class PrefWrap {
         this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext);
     }
 
-    String host() {
+    public String host() {
         return sharedPreferences.getString("pref_host", "");
     }
 
-    int port() {
+    public int port() {
         return getIntPref("pref_port");
     }
 
-    boolean hasConnectionSettings() {
+    public boolean hasConnectionSettings() {
         return !host().isEmpty() && port() != 0;
     }
 
-    boolean wakeup() {
+    public boolean wakeup() {
         return sharedPreferences.getBoolean("pref_wakeup", false);
     }
 
-    private int getIntPref(String key){
+    private int getIntPref(String key) {
         String strValue = sharedPreferences.getString(key, null);
-        if (strValue != null){
+        if (strValue != null) {
             try {
                 return Integer.valueOf(strValue);
             } catch (NumberFormatException e) {
