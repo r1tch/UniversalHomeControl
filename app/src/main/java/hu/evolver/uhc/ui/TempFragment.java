@@ -1,4 +1,4 @@
-package hu.evolver.uhc;
+package hu.evolver.uhc.ui;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -7,6 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import hu.evolver.uhc.R;
 
 public class TempFragment extends Fragment {
     private static final String ARG_FRAGMENT_NAME = "fragment_name";

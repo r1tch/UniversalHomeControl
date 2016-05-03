@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:label="@string/uhc"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -28,17 +28,17 @@
         </activity>
 
         <service
-            android:name=".UhcConnectivityService"
+            android:name=".comm.UhcConnectivityService"
             android:enabled="true"
             android:exported="false" />
 
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.SettingsActivity"
             android:label="@string/title_activity_settings"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".ui.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="hu.evolver.uhc.MainActivity" />
+                android:value=".ui.MainActivity" />
         </activity>
     </application>
 

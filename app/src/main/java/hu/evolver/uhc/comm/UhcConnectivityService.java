@@ -1,4 +1,4 @@
-package hu.evolver.uhc;
+package hu.evolver.uhc.comm;
 
 import android.app.Service;
 import android.content.Context;
@@ -13,6 +13,11 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import hu.evolver.uhc.ui.MainActivity;
+import hu.evolver.uhc.ui.MainActivityDispatcher;
+import hu.evolver.uhc.ui.PrefWrap;
+import hu.evolver.uhc.model.UhcState;
+
 public class UhcConnectivityService extends Service implements SimpleTcpClient.Listener {
     public static final String ACTION_CONNECT = "hu.evolver.uhc.ACTION_CONNECT";
     public static final String ACTION_RECONNECT = "hu.evolver.uhc.ACTION_RECONNECT";
@@ -20,26 +25,35 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     private Handler handler = null;
     private final LocalBinder localBinder = new LocalBinder();
     private SimpleTcpClient simpleTcpClient = new SimpleTcpClient(this);
-    private MainActivity mainActivity = null;   // docs say we should not store this ref, but we're careful, pinky-promise!
+    private MainActivityDispatcher mainActivityDispatcher = new MainActivityDispatcher();
     private PrefWrap prefWrap = null;
-    private UhcState uhcState = new UhcState();
+    private UhcState uhcState = new UhcState(mainActivityDispatcher);
+    private UhcTcpEncoder uhcTcpEncoder = new UhcTcpEncoder(simpleTcpClient);
 
     @NonNull
-    static Intent getConnectIntent(Context context) {
+    public static Intent getConnectIntent(Context context) {
         return getIntent(context, ACTION_CONNECT);
     }
 
     @NonNull
-    static Intent getReconnectIntent(Context context) {
+    public static Intent getReconnectIntent(Context context) {
         return getIntent(context, ACTION_RECONNECT);
     }
 
+    public UhcState getUhcState() {
+        return uhcState;
+    }
+
+    public UhcTcpEncoder getEncoder() {
+        return uhcTcpEncoder;
+    }
+
     public void setMainActivity(MainActivity mainActivity) {
-        this.mainActivity = mainActivity;
+        mainActivityDispatcher.mainActivity = mainActivity;
     }
 
     public void unsetMainActivity() {
-        mainActivity = null;
+        mainActivityDispatcher.mainActivity = null;
     }
 
     @Override
@@ -93,34 +107,29 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     }
 
     public class LocalBinder extends Binder {
-        UhcConnectivityService getService() {
+        public UhcConnectivityService getService() {
             return UhcConnectivityService.this;
         }
     }
 
-    public JSONObject getUhcStateFor(final String msg) {
-        return uhcState.get(msg);
+    public void sendTcpMsg(final String msg) {
+        simpleTcpClient.send(msg);
     }
 
-    ////////// thread functions ///////////
-    private void dispatchToMainActivity(Runnable runnable) {
-        if (mainActivity != null)
-            mainActivity.runOnUiThread(runnable);
-    }
-
+    //////////////////////////////// thread functions /////////////////////////////
     @Override
     public void onTcpConnected() {
         Log.d("UhcConnectivityService", "Connected.");
-        dispatchToMainActivity(new Runnable() {
+        mainActivityDispatcher.dispatch(new Runnable() {
             public void run() {
-                mainActivity.onTcpConnected();
+                mainActivityDispatcher.mainActivity.onTcpConnected();
             }
         });
     }
 
     @Override
     public void onTcpMessage(String message) {
-        // TODO ScreenWaker class
+        // TODO ScreenWaker class - after uhc.py has Paradox support
         if (message.startsWith("on")) {
             // deprecated - we used to target HoneyComb as well
             // KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
@@ -142,12 +151,6 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
             }
 
             uhcState.newUpdate(msg, jsonObject);
-            dispatchToMainActivity(new Runnable() {
-                @Override
-                public void run() {
-                    mainActivity.onMsg(msg, jsonObject);
-                }
-            });
         } catch (JSONException e) {
             Log.e("UhcConnectivityService", "Unexpected JSON:" + message);
         }

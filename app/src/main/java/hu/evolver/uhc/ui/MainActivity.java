@@ -1,4 +1,4 @@
-package hu.evolver.uhc;
+package hu.evolver.uhc.ui;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -17,7 +17,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import org.json.JSONObject;
+import hu.evolver.uhc.R;
+import hu.evolver.uhc.comm.UhcConnectivityService;
+import hu.evolver.uhc.comm.UhcTcpEncoder;
+import hu.evolver.uhc.model.UhcState;
 
 public class MainActivity extends AppCompatActivity {
     private UhcConnectivityService uhcConnectivityService = null;
@@ -71,14 +74,28 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d("ServiceConnection", "onServiceConnected");
             UhcConnectivityService.LocalBinder localBinder =
                     (UhcConnectivityService.LocalBinder) service;
             uhcConnectivityService = localBinder.getService();
             uhcConnectivityService.setMainActivity(MainActivity.this);
+            if (fragmentHolder.lightsFragment != null) {
+                uhcConnectivityService.getUhcState().addListener(
+                        fragmentHolder.lightsFragment
+                );
+                Log.d("MainActivity", "calling recreateSwitches");
+                fragmentHolder.lightsFragment.recreateSwitches();
+            } else
+                Log.d("MainActivity", "fragmentHolder.lightsFragment is null");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            Log.d("ServiceConnection", "onServiceDisconnected");
+            if (fragmentHolder.lightsFragment != null)
+                uhcConnectivityService.getUhcState().removeListener(
+                        fragmentHolder.lightsFragment
+                );
             uhcConnectivityService.unsetMainActivity();
             uhcConnectivityService = null;
         }
@@ -140,22 +157,19 @@ public class MainActivity extends AppCompatActivity {
         // TODO update icon
     }
 
-    public void onMsg(final String msg, final JSONObject jsonObject) {
-        // TODO gotNodes -> recreate lights and shades
-        if ("gotNodes".equals(msg)) {
-            if (fragmentHolder.lightsFragment != null)
-                fragmentHolder.lightsFragment.recreateSwitches();
-        // TODO shades
-        }
-
-    }
-
-    public JSONObject getUhcStateFor(final String msg) {
+    public UhcState getUhcState() {
         if (uhcConnectivityService != null)
-            return uhcConnectivityService.getUhcStateFor(msg);
+            return uhcConnectivityService.getUhcState();
+
         return null;
     }
 
+    public UhcTcpEncoder getEncoder() {
+        if (uhcConnectivityService == null)
+            return null;
+
+        return uhcConnectivityService.getEncoder();
+    }
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
@@ -172,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
             // getItem is called to instantiate the fragment for the given page.
             switch (position) {
                 case 0:
-                    return new LightsFragment();
+                    return new LightsShadesFragment();
                 case 1:
                     return TempFragment.newInstance("Shades");
                 case 2:

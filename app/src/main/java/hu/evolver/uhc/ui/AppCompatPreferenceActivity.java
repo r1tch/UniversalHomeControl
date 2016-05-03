@@ -1,4 +1,4 @@
-package hu.evolver.uhc;
+package hu.evolver.uhc.ui;
 
 import android.content.res.Configuration;
 import android.os.Bundle;

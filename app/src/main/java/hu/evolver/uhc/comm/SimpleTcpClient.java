@@ -1,4 +1,4 @@
-package hu.evolver.uhc;
+package hu.evolver.uhc.comm;
 
 import android.util.Log;
 

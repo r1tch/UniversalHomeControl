@@ -1,4 +1,4 @@
-package hu.evolver.uhc;
+package hu.evolver.uhc.ui;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 public class PrefWrap {
     private SharedPreferences sharedPreferences = null;
 
-    PrefWrap(Context applicationContext) {
+    public PrefWrap(Context applicationContext) {
         this.sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationContext);
     }
 
