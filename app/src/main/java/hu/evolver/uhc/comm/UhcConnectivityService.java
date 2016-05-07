@@ -13,10 +13,10 @@ import android.util.Log;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import hu.evolver.uhc.model.UhcState;
 import hu.evolver.uhc.ui.MainActivity;
 import hu.evolver.uhc.ui.MainActivityDispatcher;
 import hu.evolver.uhc.ui.PrefWrap;
-import hu.evolver.uhc.model.UhcState;
 
 public class UhcConnectivityService extends Service implements SimpleTcpClient.Listener {
     public static final String ACTION_CONNECT = "hu.evolver.uhc.ACTION_CONNECT";

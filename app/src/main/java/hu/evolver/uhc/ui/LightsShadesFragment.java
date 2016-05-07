@@ -2,14 +2,13 @@ package hu.evolver.uhc.ui;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 
@@ -26,18 +25,39 @@ import hu.evolver.uhc.model.ZWaveNode;
  * Created by rits on 2016-04-26.
  */
 public class LightsShadesFragment extends Fragment implements StateUpdateListener {
+    private static final String ARG_FRAGMENT_TYPE = "fragment_type";
+
     private LinearLayout containerLayout = null;
-    private Map<Integer, Switch> switchMap = new TreeMap<>();
+    private NodeType nodeType = NodeType.Light;
+    private ZWaveList zWaveList = null;
+
+    public enum NodeType {Light, Shade}
+
+    public static LightsShadesFragment newInstance(NodeType nodeType) {
+        LightsShadesFragment fragment = new LightsShadesFragment();
+        Bundle args = new Bundle();
+        args.putInt(ARG_FRAGMENT_TYPE, nodeType.ordinal());
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d("LightsShadesFragment", "onCreateView");
 
+        nodeType = NodeType.values()[getArguments().getInt(ARG_FRAGMENT_TYPE)];
+
         View rootView = inflater.inflate(R.layout.fragment_lightsshades, container, false);
 
         Context context = getContext();
         MainActivity mainActivity = (MainActivity) context;
-        mainActivity.fragmentHolder.lightsFragment = this;
+        if (nodeType == NodeType.Light) {
+            mainActivity.fragmentHolder.lightsFragment = this;
+            zWaveList = new LightSwitches(this);
+        } else {
+            mainActivity.fragmentHolder.shadesFragment = this;
+            zWaveList = new ShadeButtons(this);
+        }
         if (mainActivity.getUhcState() != null)
             mainActivity.getUhcState().addListener(this);
 
@@ -57,17 +77,21 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
         Log.d("LightsShadesFragment", "onDestroyView");
         super.onDestroyView();
         MainActivity mainActivity = (MainActivity) getContext();
-        mainActivity.fragmentHolder.lightsFragment = null;
+
+        if (nodeType == NodeType.Light)
+            mainActivity.fragmentHolder.lightsFragment = null;
+        else
+            mainActivity.fragmentHolder.shadesFragment = null;
+
         if (mainActivity.getUhcState() != null)
             mainActivity.getUhcState().removeListener(this);
         containerLayout = null;
+        zWaveList = null;
     }
 
     public void recreateSwitches() {
-        if (containerLayout == null) {
-            Log.d("LightsShadesFragment", "containerLayout null");
+        if (containerLayout == null || zWaveList == null)
             return;
-        }
 
         MainActivity mainActivity = (MainActivity) getContext();
         UhcState uhcState = mainActivity.getUhcState();
@@ -76,42 +100,7 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
             return;
         }
 
-        containerLayout.removeAllViews();
-        switchMap.clear();
-
-        Map<String, ZWaveNode> nodesByName = uhcState.getZWaveNodeStore().allByName();
-
-        int hpad = (int)getResources().getDimension(R.dimen.activity_horizontal_margin);
-        int vpad = (int)getResources().getDimension(R.dimen.activity_vertical_margin);
-
-        for (Map.Entry<String, ZWaveNode> entry : nodesByName.entrySet()) {
-            ZWaveNode node = entry.getValue();
-
-            if (!node.isLight())    // TODO handle the shade too with this class?? but needs custom "switch"
-                continue;
-
-            Switch sw = new Switch(mainActivity);
-            final UhcTcpEncoder encoder = mainActivity.getEncoder();
-            final int id = node.getId();
-            switchMap.put(id, sw);
-
-            sw.setText(node.getName());
-
-            sw.setPadding(hpad, vpad, hpad, vpad);
-            sw.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Switch thisSwitch = (Switch) v;
-                    Log.d("LightsShadesFragment", "onClick checked:"+thisSwitch.isChecked());
-                    encoder.zWaveSetLevel(id, thisSwitch.isChecked() ? 100 : 0);
-                    Log.d("LightsShadesFragment", "onClick returns");
-                }
-            });
-
-            sw.setChecked(node.getLevel() > 0);
-
-            containerLayout.addView(sw);
-        }
+        zWaveList.recreateElements(containerLayout, mainActivity);
     }
 
     @Override
@@ -121,10 +110,9 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
 
     @Override
     public void zWaveChangedLevels(int nodeId, int newLevel) {
-        Switch sw = switchMap.get(nodeId);
-        if (sw == null)
+        if (zWaveList == null)
             return;
 
-        sw.setChecked(newLevel > 0);
+        zWaveList.zWaveChangedLevels(nodeId, newLevel);
     }
 }

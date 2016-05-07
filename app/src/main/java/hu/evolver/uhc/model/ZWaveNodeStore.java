@@ -1,9 +1,7 @@
 package hu.evolver.uhc.model;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * Created by rits on 2016-04-27.

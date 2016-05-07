@@ -80,22 +80,23 @@ public class MainActivity extends AppCompatActivity {
             uhcConnectivityService = localBinder.getService();
             uhcConnectivityService.setMainActivity(MainActivity.this);
             if (fragmentHolder.lightsFragment != null) {
-                uhcConnectivityService.getUhcState().addListener(
-                        fragmentHolder.lightsFragment
-                );
+                uhcConnectivityService.getUhcState().addListener(fragmentHolder.lightsFragment);
                 Log.d("MainActivity", "calling recreateSwitches");
                 fragmentHolder.lightsFragment.recreateSwitches();
             } else
                 Log.d("MainActivity", "fragmentHolder.lightsFragment is null");
+
+            if (fragmentHolder.shadesFragment != null) {
+                uhcConnectivityService.getUhcState().addListener(fragmentHolder.shadesFragment);
+                fragmentHolder.shadesFragment.recreateSwitches();
+            }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             Log.d("ServiceConnection", "onServiceDisconnected");
-            if (fragmentHolder.lightsFragment != null)
-                uhcConnectivityService.getUhcState().removeListener(
-                        fragmentHolder.lightsFragment
-                );
+            uhcConnectivityService.getUhcState().removeListener(fragmentHolder.lightsFragment);
+            uhcConnectivityService.getUhcState().removeListener(fragmentHolder.shadesFragment);
             uhcConnectivityService.unsetMainActivity();
             uhcConnectivityService = null;
         }
@@ -186,9 +187,9 @@ public class MainActivity extends AppCompatActivity {
             // getItem is called to instantiate the fragment for the given page.
             switch (position) {
                 case 0:
-                    return new LightsShadesFragment();
+                    return LightsShadesFragment.newInstance(LightsShadesFragment.NodeType.Light);
                 case 1:
-                    return TempFragment.newInstance("Shades");
+                    return LightsShadesFragment.newInstance(LightsShadesFragment.NodeType.Shade);
                 case 2:
                     return TempFragment.newInstance("Media");
 

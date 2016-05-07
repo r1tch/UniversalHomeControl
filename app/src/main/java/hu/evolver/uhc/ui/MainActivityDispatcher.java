@@ -1,7 +1,5 @@
 package hu.evolver.uhc.ui;
 
-import android.util.Log;
-
 /**
  * Created by rits on 2016-05-03.
  */

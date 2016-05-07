@@ -31,4 +31,19 @@ public class UhcTcpEncoder {
         Log.d("UhcTcpEncoder", "SEND: " + jsonStr);
         tcpClient.send(jsonStr);
     }
+
+    public void zWaveStopLevelChange(int id) {
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put("service", "zwave");
+            jo.put("msg", "stopLevelChange");
+            jo.put("id", id);
+        } catch (JSONException e) {
+            Log.e("UhcTcpEncoder", "Json exception:" + e.getMessage());
+        }
+
+        String jsonStr = jo.toString();
+        Log.d("UhcTcpEncoder", "SEND: " + jsonStr);
+        tcpClient.send(jsonStr);
+    }
 }
