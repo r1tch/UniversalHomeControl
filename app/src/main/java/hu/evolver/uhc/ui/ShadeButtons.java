@@ -1,5 +1,6 @@
 package hu.evolver.uhc.ui;
 
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,7 +29,7 @@ public class ShadeButtons extends ZWaveList {
             return null;
 
         ButtonRow buttonRow = new ButtonRow(mainActivity, node.getName(), node.getId());
-        // TODO set button state based on status
+        buttonRow.setHighlight(node.getLevel());
 
         return buttonRow;
     }
@@ -48,9 +49,18 @@ public class ShadeButtons extends ZWaveList {
     @Override
     public void zWaveChangedLevels(int nodeId, int newLevel) {
         // TODO indicate somehow; only new apis support different colors...
+        ButtonRow buttonRow = (ButtonRow) switchMap.get(nodeId);
+        if (buttonRow == null)
+            return;
+
+        buttonRow.setHighlight(newLevel);
     }
 
     private class ButtonRow extends LinearLayout {
+        private ImageButton upButton = null;
+        private ImageButton stopButton = null;
+        private ImageButton downButton = null;
+
         public ButtonRow(MainActivity mainActivity, final String name, final int nodeId) {
             super(mainActivity);
             setupLayout();
@@ -68,45 +78,83 @@ public class ShadeButtons extends ZWaveList {
 
             params = new LinearLayout.LayoutParams(buttonWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-            ImageButton button = new ImageButton(mainActivity, null, R.attr.borderlessButtonStyle);
-            button.setLayoutParams(params);
-            button.setImageResource(R.drawable.ic_keyboard_arrow_up_black_24dp);
-            button.setOnClickListener(new View.OnClickListener() {
+            upButton = new ImageButton(mainActivity, null, R.attr.borderlessButtonStyle);
+            upButton.setLayoutParams(params);
+
+            upButton.setImageResource(R.drawable.ic_keyboard_arrow_up_black_24dp);
+            upButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     onUpButton(nodeId, encoder);
                 }
             });
-            this.addView(button);
+            this.addView(upButton);
 
-            button = new ImageButton(mainActivity, null, R.attr.borderlessButtonStyle);
-            button.setLayoutParams(params);
-            button.setImageResource(R.drawable.ic_remove_black_24dp);
-            button.setOnClickListener(new View.OnClickListener() {
+
+            stopButton = new ImageButton(mainActivity, null, R.attr.borderlessButtonStyle);
+            stopButton.setLayoutParams(params);
+            stopButton.setImageResource(R.drawable.ic_remove_black_24dp);
+            stopButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     onStopButton(nodeId, encoder);
                 }
             });
-            this.addView(button);
+            this.addView(stopButton);
 
-            button = new ImageButton(mainActivity, null, R.attr.borderlessButtonStyle);
+            downButton = new ImageButton(mainActivity, null, R.attr.borderlessButtonStyle);
 
-            button.setLayoutParams(params);
-            button.setImageResource(R.drawable.ic_keyboard_arrow_down_black_24dp);
-            button.setOnClickListener(new View.OnClickListener() {
+            downButton.setLayoutParams(params);
+            downButton.setImageResource(R.drawable.ic_keyboard_arrow_down_black_24dp);
+            downButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     onDownButton(nodeId, encoder);
                 }
             });
-            this.addView(button);
+            this.addView(downButton);
+        }
+
+        public void setHighlight(int level) {
+            if (level == 0)
+                highlightDown();
+            else if (level == 100)
+                highlightUp();
+            else
+                highlightStop();
+
+        }
+
+        private void highlightUp() {
+            highlightButton(upButton);
+            resetButton(stopButton);
+            resetButton(downButton);
+        }
+
+        private void highlightStop() {
+            resetButton(upButton);
+            highlightButton(stopButton);
+            resetButton(downButton);
+        }
+
+        private void highlightDown() {
+            resetButton(upButton);
+            resetButton(stopButton);
+            highlightButton(downButton);
         }
 
         private void setupLayout() {
             this.setOrientation(LinearLayout.HORIZONTAL);
             ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             this.setLayoutParams(params);
+        }
+
+        private void highlightButton(ImageButton button) {
+            button.setColorFilter(getResources().getColor(R.color.colorAccent));
+        }
+
+        private void resetButton(ImageButton button) {
+            button.setColorFilter(0);
         }
     }
 }
