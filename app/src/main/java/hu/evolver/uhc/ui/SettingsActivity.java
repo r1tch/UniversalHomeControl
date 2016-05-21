@@ -20,6 +20,7 @@ import android.view.MenuItem;
 import java.util.List;
 
 import hu.evolver.uhc.R;
+import hu.evolver.uhc.comm.UhcConnectivityService;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -41,7 +42,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
             String stringValue = value.toString();
-// TODO if connect detail chg, new intent to reconnect!
             if (preference instanceof ListPreference) {
                 // For list preferences, look up the correct display value in
                 // the preference's 'entries' list.
@@ -54,13 +54,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                                 ? listPreference.getEntries()[index]
                                 : null);
 
+            } else if ("pref_host".equals(preference.getKey()) || "pref_port".equals(preference.getKey())) {
+                Context applicationContext = getApplicationContext();
+                applicationContext.startService(UhcConnectivityService.getReconnectIntent(applicationContext));
+
+                preference.setSummary(stringValue);
             } else {
                 // For all other preferences, set the summary to the value's
                 // simple string representation.
                 preference.setSummary(stringValue);
             }
 
-            // TODO do a reconnect intent if host/port changed
             return true;
         }
     };

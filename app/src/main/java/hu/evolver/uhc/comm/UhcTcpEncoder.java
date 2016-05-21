@@ -16,12 +16,12 @@ public class UhcTcpEncoder {
         this.tcpClient = tcpClient;
     }
 
-    public void zWaveSetLevel(int id, int level) {
+    public void zWaveSetLevel(int nodeid, int level) {
         JSONObject jo = new JSONObject();
         try {
             jo.put("service", "zwave");
             jo.put("msg", "setLevel");
-            jo.put("id", id);
+            jo.put("nodeid", nodeid);
             jo.put("level", level);
         } catch (JSONException e) {
             Log.e("UhcTcpEncoder", "Json exception:" + e.getMessage());
@@ -32,12 +32,12 @@ public class UhcTcpEncoder {
         tcpClient.send(jsonStr);
     }
 
-    public void zWaveStopLevelChange(int id) {
+    public void zWaveStopLevelChange(int nodeid) {
         JSONObject jo = new JSONObject();
         try {
             jo.put("service", "zwave");
             jo.put("msg", "stopLevelChange");
-            jo.put("id", id);
+            jo.put("nodeid", nodeid);
         } catch (JSONException e) {
             Log.e("UhcTcpEncoder", "Json exception:" + e.getMessage());
         }

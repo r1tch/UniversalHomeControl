@@ -114,7 +114,7 @@ public class SimpleTcpClient implements Runnable {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                Log.d("SimpleTcpClient", "Got line: " + line);
+                Log.d("SimpleTcpClient", "thread:"  + Thread.currentThread().getId() + " Got line: " + line);
                 listener.onTcpMessage(line);
             }
 

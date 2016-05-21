@@ -1,5 +1,7 @@
 package hu.evolver.uhc.model;
 
+import android.util.Log;
+
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -16,9 +18,23 @@ public class ZWaveNodeStore {
 
     }
 
-    public void clear() {
-        byId.clear();
-        byName.clear();
+    public void replaceWith(final ZWaveNodeStore another) {
+        byId = another.byId;
+        byName = another.byName;
+    }
+
+    public boolean equals(final ZWaveNodeStore another) {
+        if (byId.size() != another.byId.size())
+            return false;
+
+        for (Map.Entry<Integer, ZWaveNode> entry : byId.entrySet()) {
+            ZWaveNode other = another.byId.get(entry.getKey());
+            if (other == null || !other.equals(entry.getValue()))
+                return false;
+        }
+
+        // assuming that byName is consistent - not checking
+        return true;
     }
 
     public ZWaveNode byId(int id) {

@@ -37,6 +37,7 @@ public abstract class ZWaveList {
         switchMap.clear();
 
         Map<String, ZWaveNode> nodesByName = mainActivity.getUhcState().getZWaveNodeStore().allByName();
+//        Map<String, ZWaveNode> nodesByName = new TreeMap<>(mainActivity.getUhcState().getZWaveNodeStore().allByName());
 
         for (Map.Entry<String, ZWaveNode> entry : nodesByName.entrySet()) {
             ZWaveNode node = entry.getValue();
@@ -47,7 +48,9 @@ public abstract class ZWaveList {
 
             switchMap.put(node.getId(), v);
             container.addView(v);
+            Log.d("ZWaveList", "added view for " + node.getName());
         }
+        Log.d("ZWaveList", "ending loop");
 
 
     }

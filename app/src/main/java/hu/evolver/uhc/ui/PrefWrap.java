@@ -12,7 +12,7 @@ public class PrefWrap {
     }
 
     public String host() {
-        return sharedPreferences.getString("pref_host", "");
+        return sharedPreferences.getString("pref_host", "").trim();
     }
 
     public int port() {
@@ -26,6 +26,8 @@ public class PrefWrap {
     public boolean wakeup() {
         return sharedPreferences.getBoolean("pref_wakeup", false);
     }
+
+    public int wakeup_zone() { return getIntPref("pref_wakeup_zone"); }
 
     private int getIntPref(String key) {
         String strValue = sharedPreferences.getString(key, null);

@@ -21,6 +21,13 @@ public class ZWaveNode implements Comparable<ZWaveNode> {
         return 0;
     }
 
+    public boolean equals(final ZWaveNode another) {
+        return id == another.id &&
+                name.equals(another.name) &&
+                level == another.level &&
+                type == another.type;
+    }
+
     public enum Type {
         ZWaveNetwork, SceneController, BinaryLight, DimmableLight, WindowCovering, Unknown
     }
@@ -41,7 +48,7 @@ public class ZWaveNode implements Comparable<ZWaveNode> {
     }
 
     public ZWaveNode(JSONObject jsonObject) {
-        id = jsonObject.optInt("id");
+        id = jsonObject.optInt("nodeid");
         name = jsonObject.optString("name");
         level = jsonObject.optInt("level");
         type = stringToType(jsonObject.optString("type"));

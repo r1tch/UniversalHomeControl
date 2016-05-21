@@ -46,13 +46,15 @@ public class UhcState {
     }
 
     private void parseGotNodes(final @NonNull JSONObject jsonObject) {
-        JSONArray nodes = jsonObject.optJSONArray("nodes");
+        Log.d("UhcState", "parseGotNodes");
+
+        final JSONArray nodes = jsonObject.optJSONArray("nodes");
         if (nodes == null) {
             Log.e("UhcState", "gotNodes msg has no nodes");
             return;
         }
 
-        zWaveNodeStore.clear();
+        final ZWaveNodeStore tmpStore = new ZWaveNodeStore();
 
         for (int i = 0; i < nodes.length(); ++i) {
             JSONObject nodeJson = nodes.optJSONObject(i);
@@ -62,12 +64,26 @@ public class UhcState {
             }
 
             ZWaveNode node = new ZWaveNode(nodeJson);
-            zWaveNodeStore.add(node);
+            tmpStore.add(node);
         }
 
+        if (mainActivityDispatcher.mainActivity == null) {
+            zWaveNodeStore.replaceWith(tmpStore);
+            return;
+        }
+
+        // Note: if gui exists, map modifications must be run in the same thread (or be synchronized, looks uglier)
         mainActivityDispatcher.dispatch(new Runnable() {
             @Override
             public void run() {
+
+                if (zWaveNodeStore.equals(tmpStore))
+                    return;
+
+                zWaveNodeStore.replaceWith(tmpStore);
+
+                Log.d("UhcState", "Nodestore elems: " + zWaveNodeStore.allByName().size());
+
                 for (StateUpdateListener listener : listeners)
                     listener.zWaveGotNodes();
             }

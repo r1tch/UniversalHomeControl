@@ -5,5 +5,15 @@
         android:title="@string/pref_wakeup"
         android:summary="@string/pref_wakeup_summ"
         android:defaultValue="true" />
-  <!-- TODO add pref for: grouping by rooms; ...? -->
+
+    <EditTextPreference
+        android:inputType="number"
+        android:defaultValue=""
+        android:key="pref_wakeup_zone"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_title_wakeup_zone" />
+
+    <!-- TODO add pref for: grouping by rooms; ...? -->
 </PreferenceScreen>

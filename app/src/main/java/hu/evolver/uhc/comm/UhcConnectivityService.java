@@ -29,6 +29,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     private PrefWrap prefWrap = null;
     private UhcState uhcState = new UhcState(mainActivityDispatcher);
     private UhcTcpEncoder uhcTcpEncoder = new UhcTcpEncoder(simpleTcpClient);
+    private ScreenWaker screenWaker = null;
 
     @NonNull
     public static Intent getConnectIntent(Context context) {
@@ -62,6 +63,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
         Log.d("UhcConnectivityService", "onDestroy");
         simpleTcpClient.disconnect();
         handler = null;
+        screenWaker = null;
     }
 
     @Override
@@ -87,6 +89,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
 
         handler = new Handler();
         prefWrap = new PrefWrap(getApplicationContext());
+        screenWaker = new ScreenWaker(getApplicationContext());
     }
 
     @NonNull
@@ -129,19 +132,6 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
 
     @Override
     public void onTcpMessage(String message) {
-        // TODO ScreenWaker class - after uhc.py has Paradox support
-        if (message.startsWith("on")) {
-            // deprecated - we used to target HoneyComb as well
-            // KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
-            // km.newKeyguardLock("RemoteWakeup").disableKeyguard();
-
-            Context context = getApplicationContext();
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            PowerManager.WakeLock wakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP
-                    | PowerManager.ON_AFTER_RELEASE, "MyWakeLock");
-            wakeLock.acquire();
-            wakeLock.release(); // we just want the screen to turn on, that's all
-        }
         try {
             final JSONObject jsonObject = new JSONObject(message);
             final String msg = jsonObject.optString("msg");
@@ -151,7 +141,9 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
             }
 
             uhcState.newUpdate(msg, jsonObject);
+            screenWaker.newUpdate(msg, jsonObject);
         } catch (JSONException e) {
+            // TODO same buffering strategy here as in uhc.py
             Log.e("UhcConnectivityService", "Unexpected JSON:" + message);
         }
     }
@@ -159,13 +151,13 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     @Override
     public void onTcpDisconnected(boolean perRequest) {
         Log.d("UhcConnectivityService", "Disconnected.");
-        // TODO notify notification
+        // TODO notify notification about connected state -- after auth?
         if (!perRequest)
             scheduleReconnect();
     }
 
     private void scheduleReconnect() {
-        if (handler == null || !prefWrap.hasConnectionSettings())
+        if (handler == null)
             return;
 
         handler.postDelayed(new Runnable() {
