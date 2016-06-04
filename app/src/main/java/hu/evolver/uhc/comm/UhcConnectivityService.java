@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -27,9 +26,11 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     private SimpleTcpClient simpleTcpClient = new SimpleTcpClient(this);
     private MainActivityDispatcher mainActivityDispatcher = new MainActivityDispatcher();
     private PrefWrap prefWrap = null;
-    private UhcState uhcState = new UhcState(mainActivityDispatcher);
-    private UhcTcpEncoder uhcTcpEncoder = new UhcTcpEncoder(simpleTcpClient);
+    private UhcState uhcState = new UhcState(simpleTcpClient, mainActivityDispatcher);
+    private ZWaveTcpSender ZWaveTcpSender = new ZWaveTcpSender(simpleTcpClient);
     private ScreenWaker screenWaker = null;
+
+    private boolean isConnected = false;
 
     @NonNull
     public static Intent getConnectIntent(Context context) {
@@ -45,8 +46,16 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
         return uhcState;
     }
 
-    public UhcTcpEncoder getEncoder() {
-        return uhcTcpEncoder;
+    public KodiConnection getKodiConnection() {
+        return uhcState.getKodiConnection();
+    }
+
+    public ZWaveTcpSender getEncoder() {
+        return ZWaveTcpSender;
+    }
+
+    public boolean isConnected() {
+        return simpleTcpClient.isConnected();
     }
 
     public void setMainActivity(MainActivity mainActivity) {
@@ -123,6 +132,8 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     @Override
     public void onTcpConnected() {
         Log.d("UhcConnectivityService", "Connected.");
+        uhcState.onTcpConnected();
+
         mainActivityDispatcher.dispatch(new Runnable() {
             public void run() {
                 mainActivityDispatcher.mainActivity.onTcpConnected();
@@ -131,29 +142,29 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     }
 
     @Override
+    public void onTcpDisconnected(boolean perRequest) {
+        Log.d("UhcConnectivityService", "Disconnected.");
+
+        mainActivityDispatcher.dispatch(new Runnable() {
+            public void run() {
+                mainActivityDispatcher.mainActivity.onTcpDisconnected();
+            }
+        });
+        if (!perRequest)
+            scheduleReconnect();
+    }
+
+    @Override
     public void onTcpMessage(String message) {
         try {
             final JSONObject jsonObject = new JSONObject(message);
-            final String msg = jsonObject.optString("msg");
-            if (msg == null) {
-                Log.e("UhcConnectivityService", "Missing msg from JSON:" + message);
-                return;
-            }
 
-            uhcState.newUpdate(msg, jsonObject);
-            screenWaker.newUpdate(msg, jsonObject);
+            uhcState.newUpdate(jsonObject);
+            screenWaker.newUpdate(jsonObject);
         } catch (JSONException e) {
             // TODO same buffering strategy here as in uhc.py
             Log.e("UhcConnectivityService", "Unexpected JSON:" + message);
         }
-    }
-
-    @Override
-    public void onTcpDisconnected(boolean perRequest) {
-        Log.d("UhcConnectivityService", "Disconnected.");
-        // TODO notify notification about connected state -- after auth?
-        if (!perRequest)
-            scheduleReconnect();
     }
 
     private void scheduleReconnect() {

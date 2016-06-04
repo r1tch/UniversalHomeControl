@@ -93,7 +93,7 @@ public class SimpleTcpClient implements Runnable {
         try {
             Log.d("SimpleTcpClient", "Connecting to " + host);
             socket = SocketFactory.getDefault().createSocket(host, port);
-            Log.d("SimpleTcpClient", "...connected.");
+            Log.d("SimpleTcpClient", "...onTcpConnected.");
             final boolean autoFlush = false;
             outStream = new PrintWriter(socket.getOutputStream(), autoFlush);
             state = State.CONNECTED;

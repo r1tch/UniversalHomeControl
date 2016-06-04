@@ -5,8 +5,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Switch;
 
-import hu.evolver.uhc.R;
-import hu.evolver.uhc.comm.UhcTcpEncoder;
+import hu.evolver.uhc.comm.ZWaveTcpSender;
 import hu.evolver.uhc.model.ZWaveNode;
 
 /**
@@ -23,7 +22,7 @@ public class LightSwitches extends ZWaveList {
             return null;
 
         Switch sw = new Switch(mainActivity);
-        final UhcTcpEncoder encoder = mainActivity.getEncoder();
+        final ZWaveTcpSender encoder = mainActivity.getEncoder();
         final int id = node.getId();
 
         sw.setText(node.getName());

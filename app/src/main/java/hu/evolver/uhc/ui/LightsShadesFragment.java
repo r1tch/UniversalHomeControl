@@ -2,7 +2,6 @@ package hu.evolver.uhc.ui;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -10,16 +9,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.Switch;
-
-import java.util.Map;
-import java.util.TreeMap;
 
 import hu.evolver.uhc.R;
-import hu.evolver.uhc.comm.UhcTcpEncoder;
 import hu.evolver.uhc.model.StateUpdateListener;
 import hu.evolver.uhc.model.UhcState;
-import hu.evolver.uhc.model.ZWaveNode;
 
 /**
  * Created by rits on 2016-04-26.
@@ -30,6 +23,7 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
     private LinearLayout containerLayout = null;
     private NodeType nodeType = NodeType.Light;
     private ZWaveList zWaveList = null;
+    private boolean isCreated = false;
 
     public enum NodeType {Light, Shade}
 
@@ -49,6 +43,16 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
 
         View rootView = inflater.inflate(R.layout.fragment_lightsshades, container, false);
 
+        return rootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        isCreated = true;
+
+        containerLayout = (LinearLayout) view.findViewById(R.id.the_switches);
+
         Context context = getContext();
         MainActivity mainActivity = (MainActivity) context;
         if (nodeType == NodeType.Light) {
@@ -58,24 +62,18 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
             mainActivity.fragmentHolder.shadesFragment = this;
             zWaveList = new ShadeButtons(this);
         }
+
         if (mainActivity.getUhcState() != null)
-            mainActivity.getUhcState().addListener(this);
-
-        return rootView;
-    }
-
-    @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        containerLayout = (LinearLayout) view.findViewById(R.id.the_switches);
-
-        recreateSwitches();
+            onUhcStateCreated(mainActivity.getUhcState());
     }
 
     @Override
     public void onDestroyView() {
         Log.d("LightsShadesFragment", "onDestroyView");
         super.onDestroyView();
+
+        isCreated = false;
+
         MainActivity mainActivity = (MainActivity) getContext();
 
         if (nodeType == NodeType.Light)
@@ -114,5 +112,16 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
             return;
 
         zWaveList.zWaveChangedLevels(nodeId, newLevel);
+    }
+
+    public void kodiVolumeChanged(boolean isMuted, double volumePercent) {
+    }
+
+    public void onUhcStateCreated(UhcState uhcState) {
+        if (!isCreated)
+            return;
+
+        uhcState.addListener(this);
+        recreateSwitches();
     }
 }

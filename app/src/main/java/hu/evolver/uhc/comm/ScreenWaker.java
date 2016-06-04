@@ -21,7 +21,9 @@ public class ScreenWaker {
         prefWrap = new PrefWrap(context);
     }
 
-    public void newUpdate(final @NonNull String msg, final @NonNull JSONObject jsonObject) {
+    public void newUpdate(final @NonNull JSONObject jsonObject) {
+        final String msg = jsonObject.optString("msg");
+
         if ("ZoneOpen".equals(msg))
             zoneOpen(jsonObject.optInt("zoneid", -1));
     }

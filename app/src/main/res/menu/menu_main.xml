@@ -2,6 +2,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.rroman.myapplication.MainActivity" >
+    <item android:id="@+id/action_playpause"
+        android:icon="@drawable/ic_play_arrow_white_24dp"
+        android:title="@string/action_playpause"
+        android:orderInCategory="100"
+        app:showAsAction="always" />
     <item android:id="@+id/action_settings"
         android:icon="@drawable/ic_settings_white_24dp"
         android:title="@string/action_settings"

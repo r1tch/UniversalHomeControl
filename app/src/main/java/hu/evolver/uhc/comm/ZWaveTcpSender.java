@@ -9,10 +9,10 @@ import org.json.JSONObject;
 /**
  * Created by rits on 2016-05-02.
  */
-public class UhcTcpEncoder {
+public class ZWaveTcpSender {
     private SimpleTcpClient tcpClient = null;
 
-    public UhcTcpEncoder(@NonNull SimpleTcpClient tcpClient) {
+    public ZWaveTcpSender(@NonNull SimpleTcpClient tcpClient) {
         this.tcpClient = tcpClient;
     }
 
@@ -24,11 +24,11 @@ public class UhcTcpEncoder {
             jo.put("nodeid", nodeid);
             jo.put("level", level);
         } catch (JSONException e) {
-            Log.e("UhcTcpEncoder", "Json exception:" + e.getMessage());
+            Log.e("ZWaveTcpSender", "Json exception:" + e.getMessage());
         }
 
         String jsonStr = jo.toString();
-        Log.d("UhcTcpEncoder", "SEND: " + jsonStr);
+        Log.d("ZWaveTcpSender", "SEND: " + jsonStr);
         tcpClient.send(jsonStr);
     }
 
@@ -39,11 +39,11 @@ public class UhcTcpEncoder {
             jo.put("msg", "stopLevelChange");
             jo.put("nodeid", nodeid);
         } catch (JSONException e) {
-            Log.e("UhcTcpEncoder", "Json exception:" + e.getMessage());
+            Log.e("ZWaveTcpSender", "Json exception:" + e.getMessage());
         }
 
         String jsonStr = jo.toString();
-        Log.d("UhcTcpEncoder", "SEND: " + jsonStr);
+        Log.d("ZWaveTcpSender", "SEND: " + jsonStr);
         tcpClient.send(jsonStr);
     }
 }

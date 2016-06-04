@@ -6,5 +6,6 @@ package hu.evolver.uhc.ui;
 public class FragmentHolder {
     public LightsShadesFragment lightsFragment = null;
     public LightsShadesFragment shadesFragment = null;
-    // TODO other fragments
+    public MediaFragment mediaFragment = null;
+    // TODO other fragments: Appliances
 }

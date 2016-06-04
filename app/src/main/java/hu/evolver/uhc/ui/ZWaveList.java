@@ -4,13 +4,11 @@ import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Switch;
 
 import java.util.Map;
 import java.util.TreeMap;
 
 import hu.evolver.uhc.R;
-import hu.evolver.uhc.comm.UhcTcpEncoder;
 import hu.evolver.uhc.model.ZWaveNode;
 
 /**

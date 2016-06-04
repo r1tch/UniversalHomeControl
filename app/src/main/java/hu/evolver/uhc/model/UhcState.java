@@ -1,29 +1,47 @@
 package hu.evolver.uhc.model;
 
 import android.support.annotation.NonNull;
+import android.util.ArraySet;
 import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import hu.evolver.uhc.comm.KodiConnection;
+import hu.evolver.uhc.comm.KodiUpdateListener;
+import hu.evolver.uhc.comm.SimpleTcpClient;
 import hu.evolver.uhc.ui.MainActivityDispatcher;
 
 /**
  * Created by rits on 2016-04-26.
  * <p/>
- * Caches UHC state so we can display something before successful connectivity
+ * Caches UHC state -- well, handles UHC connectivity, used as a comm interface for the GUI elements
  */
-public class UhcState {
-    private List<StateUpdateListener> listeners = new ArrayList<>();
+public class UhcState implements KodiUpdateListener {
+    private Set<StateUpdateListener> listeners = new HashSet<>();
     private ZWaveNodeStore zWaveNodeStore = new ZWaveNodeStore();
     private MainActivityDispatcher mainActivityDispatcher = null;
+    private KodiConnection kodiConnection = null;
+    boolean isPlaying = false;
 
-    public UhcState(MainActivityDispatcher mainActivityDispatcher) {
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
+    public UhcState(SimpleTcpClient simpleTcpClient, MainActivityDispatcher mainActivityDispatcher) {
         this.mainActivityDispatcher = mainActivityDispatcher;
+
+        kodiConnection = new KodiConnection(this, simpleTcpClient);
+    }
+
+    public KodiConnection getKodiConnection() {
+        return kodiConnection;
     }
 
     public void addListener(StateUpdateListener listener) {
@@ -34,15 +52,27 @@ public class UhcState {
         listeners.remove(listener);
     }
 
+    public void removeAllListeners() {
+        listeners.clear();
+    }
+
     public ZWaveNodeStore getZWaveNodeStore() {
         return zWaveNodeStore;
     }
 
-    public void newUpdate(final @NonNull String msg, final @NonNull JSONObject jsonObject) {
+    public void onTcpConnected() {
+        kodiConnection.onTcpConnected();
+    }
+
+    public void newUpdate(final @NonNull JSONObject jsonObject) {
+        final String msg = jsonObject.optString("msg");
+
         if ("gotNodes".equals(msg))
             parseGotNodes(jsonObject);
-        if ("changedLevels".equals(msg))
+        else if ("changedLevels".equals(msg))
             parseChangedLevels(jsonObject);
+        else
+            kodiConnection.newUpdate(jsonObject);
     }
 
     private void parseGotNodes(final @NonNull JSONObject jsonObject) {
@@ -112,5 +142,50 @@ public class UhcState {
                 }
             });
         }
+    }
+
+    @Override
+    public void kodiVolumeChanged(final boolean isMuted, final double volumePercent) {
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                for (StateUpdateListener listener : listeners)
+                    listener.kodiVolumeChanged(isMuted, volumePercent);
+            }
+        });
+    }
+
+    @Override
+    public void kodiAudioPlaying() {
+        isPlaying = true;
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                mainActivityDispatcher.mainActivity.onPlaying();
+            }
+        });
+    }
+
+    @Override
+    public void kodiAudioPaused() {
+        isPlaying = false;
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                mainActivityDispatcher.mainActivity.onStoppedPaused();
+            }
+        });
+
+    }
+
+    @Override
+    public void kodiAudioStopped() {
+        isPlaying = false;
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                mainActivityDispatcher.mainActivity.onStoppedPaused();
+            }
+        });
     }
 }

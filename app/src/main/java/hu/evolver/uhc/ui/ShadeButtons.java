@@ -1,16 +1,14 @@
 package hu.evolver.uhc.ui;
 
-import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import hu.evolver.uhc.R;
-import hu.evolver.uhc.comm.UhcTcpEncoder;
+import hu.evolver.uhc.comm.ZWaveTcpSender;
 import hu.evolver.uhc.model.ZWaveNode;
 
 /**
@@ -34,15 +32,15 @@ public class ShadeButtons extends ZWaveList {
         return buttonRow;
     }
 
-    private void onUpButton(int nodeId, final UhcTcpEncoder encoder) {
+    private void onUpButton(int nodeId, final ZWaveTcpSender encoder) {
         encoder.zWaveSetLevel(nodeId, 100);
     }
 
-    private void onDownButton(int nodeId, final UhcTcpEncoder encoder) {
+    private void onDownButton(int nodeId, final ZWaveTcpSender encoder) {
         encoder.zWaveSetLevel(nodeId, 0);
     }
 
-    private void onStopButton(int nodeId, final UhcTcpEncoder encoder) {
+    private void onStopButton(int nodeId, final ZWaveTcpSender encoder) {
         encoder.zWaveStopLevelChange(nodeId);
     }
 
@@ -72,7 +70,7 @@ public class ShadeButtons extends ZWaveList {
             text.setPadding(hpad, vpad, hpad, vpad);
             this.addView(text);
 
-            final UhcTcpEncoder encoder = mainActivity.getEncoder();
+            final ZWaveTcpSender encoder = mainActivity.getEncoder();
 
             int buttonWidth = (int) getResources().getDimension(R.dimen.shade_button_width);
 

@@ -19,15 +19,21 @@ import android.view.MenuItem;
 
 import hu.evolver.uhc.R;
 import hu.evolver.uhc.comm.UhcConnectivityService;
-import hu.evolver.uhc.comm.UhcTcpEncoder;
+import hu.evolver.uhc.comm.ZWaveTcpSender;
 import hu.evolver.uhc.model.UhcState;
 
 public class MainActivity extends AppCompatActivity {
+    private enum PlayButtonState {Playing, Paused}
+
+    ;
+
     private UhcConnectivityService uhcConnectivityService = null;
     private PrefWrap prefWrap = null;
     private SectionsPagerAdapter mSectionsPagerAdapter;
-    private ViewPager mViewPager;
+    private ViewPager mViewPager = null;
     public FragmentHolder fragmentHolder = new FragmentHolder();
+    private Menu optionsMenu = null;
+    PlayButtonState playButtonState = PlayButtonState.Paused;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,12 +55,23 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.getTabAt(0).setIcon(R.drawable.ic_lightbulb_outline_white_24dp);    // TODO move to fragment to keep setup at one place
         tabLayout.getTabAt(1).setIcon(R.drawable.ic_line_weight_white_24dp);    // TODO move to fragment to keep setup at one place
         tabLayout.getTabAt(2).setIcon(R.drawable.ic_speaker_white_24dp);    // TODO move to fragment to keep setup at one place
+        onTcpDisconnected();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        optionsMenu = menu;
+
+        MenuItem playPauseMenuItem = menu.findItem(R.id.action_playpause);
+
+        if (uhcConnectivityService == null || !uhcConnectivityService.isConnected()) {
+            playPauseMenuItem.setVisible(false);
+        } else if (uhcConnectivityService != null && uhcConnectivityService.getUhcState().isPlaying()) {
+            playPauseMenuItem.setIcon(R.drawable.ic_pause_white_24dp);
+            playButtonState = PlayButtonState.Playing;
+        }
+
         return true;
     }
 
@@ -71,37 +88,6 @@ public class MainActivity extends AppCompatActivity {
         unbindService(serviceConnection);
         uhcConnectivityService = null; // should not be necessary (serviceConnection does it)
     }
-
-    private ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.d("ServiceConnection", "onServiceConnected");
-            UhcConnectivityService.LocalBinder localBinder =
-                    (UhcConnectivityService.LocalBinder) service;
-            uhcConnectivityService = localBinder.getService();
-            uhcConnectivityService.setMainActivity(MainActivity.this);
-            if (fragmentHolder.lightsFragment != null) {
-                uhcConnectivityService.getUhcState().addListener(fragmentHolder.lightsFragment);
-                Log.d("MainActivity", "calling recreateSwitches");
-                fragmentHolder.lightsFragment.recreateSwitches();
-            } else
-                Log.d("MainActivity", "fragmentHolder.lightsFragment is null");
-
-            if (fragmentHolder.shadesFragment != null) {
-                uhcConnectivityService.getUhcState().addListener(fragmentHolder.shadesFragment);
-                fragmentHolder.shadesFragment.recreateSwitches();
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            Log.d("ServiceConnection", "onServiceDisconnected");
-            uhcConnectivityService.getUhcState().removeListener(fragmentHolder.lightsFragment);
-            uhcConnectivityService.getUhcState().removeListener(fragmentHolder.shadesFragment);
-            uhcConnectivityService.unsetMainActivity();
-            uhcConnectivityService = null;
-        }
-    };
 
     @Override
     public void onPause() {
@@ -121,6 +107,49 @@ public class MainActivity extends AppCompatActivity {
         applicationContext.startService(UhcConnectivityService.getReconnectIntent(applicationContext));
     }
 
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d("ServiceConnection", "onServiceConnected");
+            UhcConnectivityService.LocalBinder localBinder =
+                    (UhcConnectivityService.LocalBinder) service;
+            uhcConnectivityService = localBinder.getService();
+            uhcConnectivityService.setMainActivity(MainActivity.this);
+
+            UhcState uhcState = uhcConnectivityService.getUhcState();
+            if (fragmentHolder.lightsFragment != null)
+                fragmentHolder.lightsFragment.onUhcStateCreated(uhcState);
+
+            if (fragmentHolder.shadesFragment != null)
+                fragmentHolder.shadesFragment.onUhcStateCreated(uhcState);
+
+            if (fragmentHolder.mediaFragment != null)
+                fragmentHolder.mediaFragment.onUhcStateCreated(uhcState);
+
+            if (uhcConnectivityService.isConnected())
+                onTcpConnected();
+            else
+                onTcpDisconnected();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d("ServiceConnection", "onServiceDisconnected");
+
+            removeListeners();
+            uhcConnectivityService.unsetMainActivity();
+            uhcConnectivityService = null;
+        }
+    };
+
+    private void removeListeners() {
+        UhcState uhcState = uhcConnectivityService.getUhcState();
+        if (uhcState == null)
+            return;
+
+        uhcState.removeAllListeners();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -134,29 +163,47 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.action_playpause) {
+            if (uhcConnectivityService == null)
+                return true;
+
+            if (playButtonState == PlayButtonState.Paused) {
+                uhcConnectivityService.getKodiConnection().sendPlay();
+                return true;
+            }
+
+            if (playButtonState == PlayButtonState.Playing) {
+                uhcConnectivityService.getKodiConnection().sendPause();
+                return true;
+            }
+
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
-    /*
-    public void startStopService(View view) {
-        // TODO this should be fixed:
-        // - auto connect on startup depending on setting
-        // - disconnect when exiting (when activity goes out of focus)
-        CheckBox checkBox = (CheckBox) view;
-        Log.d("CLICKED", "Checkbox isChecked:" + checkBox.isChecked());
-
-        Context context = getApplicationContext();
-        if (checkBox.isChecked()) {
-            context.startService(UhcConnectivityService.getConnectIntent(context));
-        } else {
-            context.stopService(UhcConnectivityService.getConnectIntent(context));
-        }
-
-    }
-    */
-
     public void onTcpConnected() {
-        // TODO update icon
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        toolbar.setLogo(R.drawable.ic_home_white_24dp);
+        toolbar.setTitle("");
+
+        if (optionsMenu != null) {
+            MenuItem menuItem = optionsMenu.findItem(R.id.action_playpause);
+            menuItem.setVisible(true);
+        }
+    }
+
+    public void onTcpDisconnected() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        toolbar.setLogo(R.drawable.ic_autorenew_white_24dp);
+        toolbar.setTitle(R.string.connecting);
+
+        if (optionsMenu != null) {
+            MenuItem menuItem = optionsMenu.findItem(R.id.action_playpause);
+            menuItem.setVisible(false);
+        }
     }
 
     public UhcState getUhcState() {
@@ -166,11 +213,30 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
-    public UhcTcpEncoder getEncoder() {
+    public ZWaveTcpSender getEncoder() {
         if (uhcConnectivityService == null)
             return null;
 
         return uhcConnectivityService.getEncoder();
+    }
+
+    public void onPlaying() {
+        playButtonState = PlayButtonState.Playing;
+
+        if (optionsMenu != null) {
+            MenuItem menuItem = optionsMenu.findItem(R.id.action_playpause);
+
+            menuItem.setIcon(R.drawable.ic_pause_white_24dp);
+        }
+    }
+
+    public void onStoppedPaused() {
+        playButtonState = PlayButtonState.Paused;
+
+        if (optionsMenu != null) {
+            MenuItem menuItem = optionsMenu.findItem(R.id.action_playpause);
+            menuItem.setIcon(R.drawable.ic_play_arrow_white_24dp);
+        }
     }
 
     /**
@@ -192,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                 case 1:
                     return LightsShadesFragment.newInstance(LightsShadesFragment.NodeType.Shade);
                 case 2:
-                    return TempFragment.newInstance("Media");
+                    return new MediaFragment();
 
             }
             return null;    // we should never-ever get here though
