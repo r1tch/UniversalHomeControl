@@ -1,5 +1,7 @@
 package hu.evolver.uhc.comm;
 
+import hu.evolver.uhc.model.KodiPlayerState;
+
 /**
  * Created by rroman on 6/3/16.
  */
@@ -9,4 +11,7 @@ public interface KodiUpdateListener {
     void kodiAudioPlaying();
     void kodiAudioPaused();
     void kodiAudioStopped();
+
+    void kodiPlayerUpdate(final String type, final KodiPlayerState kodiPlayerState);
+    void kodiPlayingItem(final String label);
 }

@@ -42,6 +42,7 @@ public class KodiConnection {
         kodiPlaylist.clear();
         kodiTcpSender.sendApplicationGetProperties();
         kodiTcpSender.sendGetSourcesMusic();
+        kodiPlayers.onTcpConnected();
         kodiTcpSender.sendGetPlaylists();   // TODO when received playlist ID, remember ID, then issue query for music playlist
 
         // for sources, logic could be: 1) get sources; if single returned, get directory too & populate "root" with that
@@ -54,14 +55,32 @@ public class KodiConnection {
         if (!"kodi".equals(fromService))
             return;
 
-        final String method = jsonObject.optString("method");
-
-        if ("Application.OnVolumeChanged".equals(method)) {
-            parseOnVolumeChanged(jsonObject);
+        final String msg = jsonObject.optString("msg");
+        if ("kodiReconnected".equals(msg)) {        // happens e.g upon Kodi reboot
+            onTcpConnected();
             return;
         }
 
+        final String id = jsonObject.optString("id");
+        String idMethod = "";
+        String extraId = "";
+        if (id != null) {
+            String[] methodAndExtraId = id.split(",", 2);
+            if (methodAndExtraId.length > 1) {
+                idMethod = methodAndExtraId[0];
+                extraId = methodAndExtraId[1];
+            }
+        }
+
         final JSONObject resultObject = jsonObject.optJSONObject("result");
+
+        if ("Player.GetProperties".equals(idMethod)) {
+            kodiPlayers.playerPropertiesUpdate(jsonObject.optJSONObject("result"), extraId);
+            return;
+        } else if ("Player.GetItem".equals(idMethod)) {
+            parseItem(resultObject);
+        }
+
         if (resultObject != null) {
             parseResultObject(resultObject);
             return;
@@ -78,9 +97,96 @@ public class KodiConnection {
             parseErrorJSON(jsonObject);
             return;
         }
+
+        final String method = jsonObject.optString("method");
+        if ("Player.OnPlay".equals(method)) {
+            parseOnPlay(jsonObject.optJSONObject("params"));
+        } else if ("Player.OnPause".equals(method)) {
+            parseOnPause(jsonObject.optJSONObject("params"));
+        } else if ("Player.OnStop".equals(method)) {
+            parseOnStop();
+        } else if ("Player.OnSeek".equals(method)) {
+            parseOnSeek(jsonObject.optJSONObject("params"));
+        } else if ("Application.OnVolumeChanged".equals(method)) {
+            parseOnVolumeChanged(jsonObject);
+            return;
+        }
+
+    }
+
+    private void parseItem(JSONObject resultObject) {
+        final JSONObject item = resultObject.optJSONObject("item");
+        if (item == null)
+            return;
+
+        String label = item.optString("label");
+        String title = item.optString("title");
+        String file = item.optString("file");
+
+        if (label == null)
+            label = title;
+
+        if (label == null) {
+            if (file == null)
+                label = "";
+            else {
+                label = file.substring(file.lastIndexOf('/'));
+            }
+        }
+
+        updateListener.kodiPlayingItem(label);
+    }
+
+    private void parseOnPlay(JSONObject params) {
+        if (params == null)
+            return;
+
+        try {
+            int playerid = params.getJSONObject("data").getJSONObject("player").getInt("playerid");
+            kodiTcpSender.sendPlayerGetProperties(playerid);    // we need this for proper playlist position update
+            if (playerid == kodiPlayers.getAudioPlayerId()) {
+                updateListener.kodiAudioPlaying();
+                kodiTcpSender.sendPlayerGetItem(playerid);
+            }
+        } catch (JSONException e) {
+            Log.e("KodiConnection", e.toString());
+        }
+    }
+
+    private void parseOnPause(JSONObject params) {
+        if (params == null)
+            return;
+
+        try {
+            int playerid = params.getJSONObject("data").getJSONObject("player").getInt("playerid");
+            kodiPlayers.onPause(playerid);
+            if (playerid == kodiPlayers.getAudioPlayerId()) {
+                updateListener.kodiAudioPaused();
+            }
+        } catch (JSONException e) {
+            Log.e("KodiConnection", e.toString());
+        }
+    }
+
+    private void parseOnStop() {
+        kodiPlayers.onStop();
+    }
+
+    private void parseOnSeek(JSONObject params) {
+        if (params == null)
+            return;
+
+        try {
+            // no, other info is not usable (outdated!)
+            int playerid = params.getJSONObject("data").getJSONObject("player").getInt("playerid");
+            kodiPlayers.onSeek(playerid);
+        } catch (JSONException e) {
+            Log.e("KodiConnection", "parseOnSeek - " + e.toString());
+        }
     }
 
     private void parseErrorJSON(JSONObject jsonObject) {
+        /*
         try {
             JSONObject data = jsonObject.getJSONObject("error").getJSONObject("data");
             String method = data.getString("method");
@@ -95,6 +201,7 @@ public class KodiConnection {
             }
         } catch (JSONException e) {
         }
+        */
     }
 
     private void parseResultArray(JSONArray resultArray) {
@@ -102,10 +209,11 @@ public class KodiConnection {
             return;
 
         final JSONObject firstObject = resultArray.optJSONObject(0);
+        if (firstObject == null)
+            return;     // perfectly legit if empty result; eg list of active players empty if all stopped
         // {..., result: [{playlist1}, {playlist2}] }
-        if (firstObject != null && firstObject.optString("playlistid") != null) {
+        if (firstObject.has("playlistid")) {
             kodiPlaylist.gotPlaylists(resultArray);
-            kodiPlayers.getPlayers();
         }
     }
 
@@ -119,8 +227,6 @@ public class KodiConnection {
             isMuted = resultObject.optBoolean("muted");
             volumePercent = resultObject.optDouble("volume");
             updateListener.kodiVolumeChanged(isMuted, volumePercent);
-        } else if (resultObject.has("type") && resultObject.has("percentage") && resultObject.has("repeat")) {
-            kodiPlayers.playerPropertiesUpdate(resultObject);
         }
     }
 
@@ -184,5 +290,40 @@ public class KodiConnection {
     public void sendPause() {
         if (kodiPlayers.isAudioPlayerPlaying())
             kodiPlayers.pauseAudioPlayer();
+    }
+
+    public boolean sendUpdateRequest() {
+        int audioPlayerId = kodiPlayers.getAudioPlayerId();
+        if (audioPlayerId == -1)
+            return false;
+
+        kodiTcpSender.sendPlayerGetProperties(audioPlayerId);
+        kodiTcpSender.sendPlayerGetItem(audioPlayerId);
+        return true;
+    }
+
+    public void onTrackPositionSeekBarChange(double percentage) {
+        int audioPlayerId = kodiPlayers.getAudioPlayerId();
+        if (audioPlayerId == -1)
+            return ;
+
+        kodiTcpSender.sendPlayerSeek(audioPlayerId, percentage);
+    }
+
+    public void onPrevTrack() {
+        int audioPlayerId = kodiPlayers.getAudioPlayerId();
+        if (audioPlayerId == -1)
+            return;
+
+        kodiTcpSender.sendPlayerGoToPrevNext(audioPlayerId, false);
+    }
+
+    public void onNextTrack() {
+        Log.d("KodiConnection", "onNextTrack");
+        int audioPlayerId = kodiPlayers.getAudioPlayerId();
+        if (audioPlayerId == -1)
+            return;
+
+        kodiTcpSender.sendPlayerGoToPrevNext(audioPlayerId, true);
     }
 }

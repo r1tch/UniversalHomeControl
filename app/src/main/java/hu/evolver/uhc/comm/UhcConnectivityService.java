@@ -21,7 +21,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     public static final String ACTION_CONNECT = "hu.evolver.uhc.ACTION_CONNECT";
     public static final String ACTION_RECONNECT = "hu.evolver.uhc.ACTION_RECONNECT";
 
-    private Handler handler = null;
+    private Handler reconnectHandler = null;
     private final LocalBinder localBinder = new LocalBinder();
     private SimpleTcpClient simpleTcpClient = new SimpleTcpClient(this);
     private MainActivityDispatcher mainActivityDispatcher = new MainActivityDispatcher();
@@ -71,7 +71,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
         super.onDestroy();
         Log.d("UhcConnectivityService", "onDestroy");
         simpleTcpClient.disconnect();
-        handler = null;
+        reconnectHandler = null;
         screenWaker = null;
     }
 
@@ -96,7 +96,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
         super.onCreate();
         Log.d("UhcConnectivityService", "onCreate");
 
-        handler = new Handler();
+        reconnectHandler = new Handler();
         prefWrap = new PrefWrap(getApplicationContext());
         screenWaker = new ScreenWaker(getApplicationContext());
     }
@@ -168,10 +168,10 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     }
 
     private void scheduleReconnect() {
-        if (handler == null)
+        if (reconnectHandler == null)
             return;
 
-        handler.postDelayed(new Runnable() {
+        reconnectHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 Log.d("UhcConnectivityService", "Reconnecting..");

@@ -9,4 +9,7 @@ public interface StateUpdateListener {
     void zWaveGotNodes();
     void zWaveChangedLevels(int nodeId, int newLevel);
     void kodiVolumeChanged(boolean isMuted, double volumePercent);
+    void kodiPlayerUpdate(final String type, KodiPlayerState kodiPlayerState);
+
+    void kodiPlayingItem(String label);
 }

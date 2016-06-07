@@ -25,8 +25,6 @@ import hu.evolver.uhc.model.UhcState;
 public class MainActivity extends AppCompatActivity {
     private enum PlayButtonState {Playing, Paused}
 
-    ;
-
     private UhcConnectivityService uhcConnectivityService = null;
     private PrefWrap prefWrap = null;
     private SectionsPagerAdapter mSectionsPagerAdapter;
@@ -117,6 +115,8 @@ public class MainActivity extends AppCompatActivity {
             uhcConnectivityService.setMainActivity(MainActivity.this);
 
             UhcState uhcState = uhcConnectivityService.getUhcState();
+            uhcState.removeAllListeners();      // that's needed here as disconnection is not received
+
             if (fragmentHolder.lightsFragment != null)
                 fragmentHolder.lightsFragment.onUhcStateCreated(uhcState);
 
@@ -130,12 +130,18 @@ public class MainActivity extends AppCompatActivity {
                 onTcpConnected();
             else
                 onTcpDisconnected();
+
+            if (uhcState.isPlaying())
+                onPlaying();
+            else
+                onStoppedPaused();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             Log.d("ServiceConnection", "onServiceDisconnected");
 
+            // IMPORTANT, this is not being called !!!
             removeListeners();
             uhcConnectivityService.unsetMainActivity();
             uhcConnectivityService = null;

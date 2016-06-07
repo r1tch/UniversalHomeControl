@@ -25,183 +25,167 @@ public class KodiTcpSender {
         return jo;
     }
 
+    private void sendMethodWithParams(final String method, final JSONObject params, final String extraId) throws JSONException {
+        JSONObject jo = createCommonJSONObject(method);
+
+        if (params != null)
+            jo.put("params", params);
+
+        jo.put("id", method + "," + extraId);
+
+        String jsonStr = jo.toString();
+        Log.d("KodiTcpSender", "SEND: " + jsonStr);
+        simpleTcpClient.send(jsonStr);
+    }
+
+    private void sendMethodWithParams(final String method, final JSONObject params) throws JSONException {
+        sendMethodWithParams(method, params, "");
+    }
+
     public void sendGetSourcesMusic() {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Files.GetSources");
-
             JSONObject sort = new JSONObject();
             sort.put("order", "ascending");
             sort.put("method", "file");
 
             JSONObject params = new JSONObject();
             params.put("media", "music");
-            jo.put("params", params);
+            params.put("sort", sort);
+            sendMethodWithParams("Files.GetSources", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendGetPlaylists() {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Playlist.GetPlaylists");
+            sendMethodWithParams("Playlist.GetPlaylists", null);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendApplicationGetProperties() {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Application.GetProperties");
-            JSONObject params = new JSONObject();
             JSONArray properties = new JSONArray("[\"volume\", \"muted\"]");
+            JSONObject params = new JSONObject();
             params.put("properties", properties);
-            jo.put("params", params);
+            sendMethodWithParams("Application.GetProperties", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendSetMuted(final boolean isMuted) {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Application.SetMuted");
             JSONObject params = new JSONObject();
             params.put("mute", isMuted);
-            jo.put("params", params);
+            sendMethodWithParams("Application.SetMuted", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendSetVolume(final int volumePercent) {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Application.SetVolume");
             JSONObject params = new JSONObject();
             params.put("volume", volumePercent);
-            jo.put("params", params);
+            sendMethodWithParams("Application.SetVolume", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendGetDirectory(final String directory) {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Files.GetDirectory");
             JSONObject params = new JSONObject();
             params.put("directory", directory);
-            jo.put("params", params);
+            sendMethodWithParams("Files.GetDirectory", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendPlayerGetProperties(int playerid) {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Player.GetProperties");
-            JSONArray properties = new JSONArray("[\"type\", \"time\", \"percentage\", \"totaltime\", \"playlistid\", \"position\", \"repeat\", \"shuffled\", \"live\"]");
+            JSONArray properties = new JSONArray("[\"type\", \"time\", \"percentage\", \"totaltime\", \"playlistid\", \"speed\", \"position\", \"repeat\", \"shuffled\", \"live\"]");
 
             JSONObject params = new JSONObject();
             params.put("playerid", playerid);
             params.put("properties", properties);
-            jo.put("params", params);
+            sendMethodWithParams("Player.GetProperties", params, Integer.toString(playerid));
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendPlayerPlayPause(int playerid, boolean shouldPlay) {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Player.PlayPause");
             JSONObject params = new JSONObject();
             params.put("playerid", playerid);
             params.put("play", shouldPlay);
-            jo.put("params", params);
+            sendMethodWithParams("Player.PlayPause", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendPlayerStop(int playerid) {
-        JSONObject jo = null;
 
         try {
-            jo = createCommonJSONObject("Player.Stop");
             JSONObject params = new JSONObject();
             params.put("playerid", playerid);
-            jo.put("params", params);
+            sendMethodWithParams("Player.Stop", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
-
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
     }
 
     public void sendPlayerOpenPlaylist(int playlistid) {
-        JSONObject jo = null;
-
         try {
-            jo = createCommonJSONObject("Player.Open");
             JSONObject item = new JSONObject();
             item.put("playlistid", playlistid);
             JSONObject params = new JSONObject();
             params.put("item", item);
-            jo.put("params", params);
+            sendMethodWithParams("Player.Open", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
+    }
 
-        String jsonStr = jo.toString();
-        Log.d("KodiTcpSender", "SEND: " + jsonStr);
-        simpleTcpClient.send(jsonStr);
+    public void sendPlayerGetItem(int playerid) {
+        try {
+            JSONArray properties = new JSONArray("[\"title\", \"album\", \"artist\", \"duration\", \"file\", \"streamdetails\"]");
+
+            JSONObject params = new JSONObject();
+            params.put("playerid", playerid);
+            params.put("properties", properties);
+            sendMethodWithParams("Player.GetItem", params, Integer.toString(playerid));
+        } catch (JSONException e) {
+            Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
+        }
+    }
+
+    public void sendPlayerSeek(int playerid, double percentage) {
+        try {
+            JSONObject params = new JSONObject();
+            params.put("playerid", playerid);
+            params.put("value", percentage);
+            sendMethodWithParams("Player.Seek", params);
+        } catch (JSONException e) {
+            Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
+        }
+    }
+
+    public void sendPlayerGoToPrevNext(int playerid, boolean toNext) {
+        try {
+            JSONObject params = new JSONObject();
+            params.put("playerid", playerid);
+            params.put("to", toNext ? "next" : "previous");
+            sendMethodWithParams("Player.GoTo", params);
+        } catch (JSONException e) {
+            Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
+        }
     }
 
     public void sendHifiVolUpDown(final boolean isUp) {

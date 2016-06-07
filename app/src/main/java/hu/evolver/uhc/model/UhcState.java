@@ -188,4 +188,26 @@ public class UhcState implements KodiUpdateListener {
             }
         });
     }
+
+    @Override
+    public void kodiPlayerUpdate(final String type, final KodiPlayerState kodiPlayerState) {
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                for (StateUpdateListener listener : listeners)
+                    listener.kodiPlayerUpdate(type, kodiPlayerState);
+            }
+        });
+    }
+
+    @Override
+    public void kodiPlayingItem(final String label) {
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                for (StateUpdateListener listener : listeners)
+                    listener.kodiPlayingItem(label);
+            }
+        });
+    }
 }

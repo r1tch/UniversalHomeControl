@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import hu.evolver.uhc.R;
+import hu.evolver.uhc.model.KodiPlayerState;
 import hu.evolver.uhc.model.StateUpdateListener;
 import hu.evolver.uhc.model.UhcState;
 
@@ -115,6 +116,14 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
     }
 
     public void kodiVolumeChanged(boolean isMuted, double volumePercent) {
+    }
+
+    @Override
+    public void kodiPlayerUpdate(String type, KodiPlayerState kodiPlayerState) {
+    }
+
+    @Override
+    public void kodiPlayingItem(String label) {
     }
 
     public void onUhcStateCreated(UhcState uhcState) {
