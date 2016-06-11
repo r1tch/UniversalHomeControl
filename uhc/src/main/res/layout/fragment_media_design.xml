@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="5dp">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal">
+
+        <ImageButton
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/volumeDownButton"
+            style="?android:borderlessButtonStyle"
+            android:src="@drawable/ic_volume_down_black_24dp"
+            android:contentDescription="@string/hifi_volume_down" />
+
+        <ImageButton
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/volumeUpButton"
+            android:src="@drawable/ic_volume_up_black_24dp"
+            style="?android:borderlessButtonStyle"
+            android:contentDescription="@string/hifi_volume_up" />
+
+        <SeekBar
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/volumeSeekBar"
+            android:layout_weight="1"
+            android:contentDescription="@string/str_media_volume"
+            android:layout_gravity="center"
+            android:max="100"
+            android:progress="0" />
+
+        <ImageButton
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/prevTrackButton"
+            style="?android:borderlessButtonStyle"
+            android:src="@drawable/ic_skip_previous_black_24dp"
+            android:contentDescription="@string/previous_track" />
+
+        <ImageButton
+            android:layout_width="48dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/nextTrackButton"
+            style="?android:borderlessButtonStyle"
+            android:src="@drawable/ic_skip_next_black_24dp"
+            android:contentDescription="@string/next_track" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/trackLabel"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="@string/defaultTrackTimes"
+            android:id="@+id/trackTimes"
+            android:textStyle="italic" />
+    </LinearLayout>
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/trackPositionSeekBar"
+        android:max="10000" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/trackListScrollView"
+        android:layout_gravity="center_horizontal"
+        android:paddingTop="10dp">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/trackListContainerLayout">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/singleTrackLayout">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/imageView"
+                    android:src="@drawable/ic_music_note_black_24dp"
+                    android:layout_gravity="center_vertical"
+                    android:tint="#858585"
+                    android:contentDescription="@string/entry_type_indication"
+                    android:paddingRight="5dp" />
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/titleArtistLayout"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:text="We Will Rock You"
+                        android:id="@+id/textView2" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        android:text="Queen"
+                        android:id="@+id/textView3"
+                        android:textStyle="italic" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="12:23:11"
+                    android:id="@+id/trackLength"
+                    android:textStyle="italic"
+                    android:layout_weight="0"
+                    android:layout_gravity="center_vertical" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

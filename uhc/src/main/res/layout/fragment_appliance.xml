@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|center_horizontal"
+            android:orientation="horizontal"
+            android:paddingBottom="16dp"
+            android:paddingLeft="16dp">
+
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="HiFi"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:labelFor="@+id/hifiPowerImageButton" />
+
+            <ImageButton
+                android:id="@+id/hifiPowerImageButton"
+                style="@style/Base.Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_power_settings_new_black_24dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical|center_horizontal"
+            android:orientation="horizontal"
+            android:paddingBottom="16dp"
+            android:paddingLeft="16dp">
+
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Projector"
+                android:labelFor="@+id/projectorPowerImageButton"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <ImageButton
+                android:id="@+id/projectorPowerImageButton"
+                style="@style/Base.Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_power_settings_new_black_24dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingBottom="16dp"
+            android:paddingLeft="16dp">
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Airconditioner"
+                android:labelFor="@+id/acPowerImageButton"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <ImageButton
+                android:id="@+id/acPowerImageButton"
+                style="@style/Base.Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_power_settings_new_black_24dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:id="@+id/acSettingsLayout">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/acFuncAImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_brightness_auto_black_24dp" />
+
+                <ImageButton
+                    android:id="@+id/acFuncCImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_ac_unit_black_24dp" />
+
+                <ImageButton
+                    android:id="@+id/acFuncHImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_whatshot_black_24dp" />
+
+                <ImageButton
+                    android:id="@+id/acFuncDImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_invert_colors_black_24dp" />
+
+                <ImageButton
+                    android:id="@+id/acFuncFImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_toys_black_24dp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/acTempLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|center_horizontal"
+                android:orientation="horizontal"
+                android:padding="5dp">
+
+                <ImageButton
+                    android:id="@+id/acTempMinusImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_keyboard_arrow_down_black_24dp" />
+
+                <TextView
+                    android:id="@+id/acTempTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="16dp"
+                    android:paddingTop="16dp"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textSize="40dp" />
+
+                <ImageButton
+                    android:id="@+id/acTempPlusImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_keyboard_arrow_up_black_24dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|center_horizontal"
+                android:orientation="horizontal"
+                android:id="@+id/acFanLayout">
+
+                <ImageView
+                    android:id="@+id/imageView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingRight="16dp"
+                    android:src="@drawable/ic_toys_black_24dp" />
+
+                <Button
+                    android:id="@+id/acFanAButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fan_auto" />
+
+                <Button
+                    android:id="@+id/acFanLButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fan_low" />
+
+                <Button
+                    android:id="@+id/acFanMButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fan_medium" />
+
+                <Button
+                    android:id="@+id/acFanHButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/fan_high" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|center_horizontal"
+                android:orientation="horizontal"
+                android:id="@+id/acFlagLayout">
+
+                <ImageButton
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:id="@+id/acSwingImageButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_import_export_black_24dp" />
+
+                <ImageButton
+                    android:id="@+id/acFlagQImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_local_hotel_black_24dp" />
+
+                <ImageButton
+                    android:id="@+id/acFlagSImageButton"
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_attach_money_black_24dp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
