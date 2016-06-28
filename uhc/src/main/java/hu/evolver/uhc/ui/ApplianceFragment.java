@@ -17,6 +17,8 @@ import android.widget.TextView;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+
 import hu.evolver.uhc.R;
 import hu.evolver.uhc.comm.UhcTcpSender;
 import hu.evolver.uhc.model.AirconditionerState;
@@ -446,15 +448,23 @@ public class ApplianceFragment extends Fragment implements StateUpdateListener {
     }
 
     @Override
-    public void kodiClearPlaylist() {
+    public void kodiOnStop() {
     }
 
     @Override
-    public void kodiAddPlaylistItem(int position, KodiItem item, int newLength) {
+    public void kodiClearAudioPlaylist() {
     }
 
     @Override
-    public void kodiRemovePlaylistItem(int position, int newLength) {
+    public void kodiPlaylistUpdate(ArrayList<KodiItem> items) {
+    }
+
+    @Override
+    public void kodiAddAudioPlaylistItem(int position, int songid) {
+    }
+
+    @Override
+    public void kodiRemoveAudioPlaylistItem(int position) {
     }
 
     @Override

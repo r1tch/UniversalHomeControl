@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/UniversalHomeControl.iml" filepath="$PROJECT_DIR$/UniversalHomeControl.iml" />
-      <module fileurl="file://$PROJECT_DIR$/uhc/app.iml" filepath="$PROJECT_DIR$/uhc/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/uhc/uhc.iml" filepath="$PROJECT_DIR$/uhc/uhc.iml" />
     </modules>
   </component>

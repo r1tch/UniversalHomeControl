@@ -14,7 +14,8 @@
         app:showAsAction="never" />
     <item android:id="@+id/action_guestmode"
         android:icon="@drawable/ic_remove_circle_white_24dp"
-        android:title="@string/hold_off"
-        app:showAsAction="never" />
+        android:title="@string/suspend_actions"
+        app:showAsAction="never"
+        android:checkable="true"/>
 
 </menu>

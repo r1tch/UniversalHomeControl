@@ -81,6 +81,36 @@
         android:id="@+id/trackPositionSeekBar"
         android:max="10000" />
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:id="@+id/repeatButton"
+            android:src="@drawable/ic_repeat_black_24dp"
+            style="?android:borderlessButtonStyle" />
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:id="@+id/shuffleButton"
+            android:src="@drawable/ic_shuffle_black_24dp"
+            style="?android:borderlessButtonStyle" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Add..."
+            android:id="@+id/addButton"
+            android:drawableLeft="@drawable/ic_queue_black_24dp"
+            style="?android:borderlessButtonStyle" />
+    </LinearLayout>
+
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

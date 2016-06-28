@@ -1,5 +1,7 @@
 package hu.evolver.uhc.comm;
 
+import java.util.ArrayList;
+
 import hu.evolver.uhc.model.KodiItem;
 import hu.evolver.uhc.model.KodiPlayers;
 
@@ -13,7 +15,9 @@ public interface KodiUpdateListener {
     void kodiPlayerUpdate(KodiPlayers.Player player);
     void kodiPlayingItem(final String label);
 
-    void kodiClearPlaylist();
-    void kodiAddPlaylistItem(int position, KodiItem item, int newLength);
-    void kodiRemovePlaylistItem(int position, int newLength);
+    void kodiClearAudioPlaylist();
+    void kodiPlaylistUpdate(ArrayList<KodiItem> items);
+    void kodiAddAudioPlaylistItem(int position, int itemid);
+    void kodiRemoveAudioPlaylistItem(int position);
+    void kodiOnStop();
 }

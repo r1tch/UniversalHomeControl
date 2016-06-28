@@ -15,6 +15,8 @@ import android.widget.LinearLayout;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+
 import hu.evolver.uhc.R;
 import hu.evolver.uhc.model.JsonState;
 import hu.evolver.uhc.model.KodiItem;
@@ -32,7 +34,6 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
     private NodeType nodeType = NodeType.Light;
     private ZWaveList zWaveList = null;
     private boolean isCreated = false;
-    private String currentScene = "none";
 
     public enum NodeType {Light, Shade}
 
@@ -74,42 +75,6 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
 
         if (mainActivity.getUhcState() != null)
             onUhcStateCreated(mainActivity.getUhcState());
-
-        createCallbacks(view);
-    }
-
-    private void createCallbacks(View view) {
-        Button button = (Button) view.findViewById(R.id.cozyButton);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String newScene = "cozy";
-                if (newScene.equals(currentScene))
-                    newScene = "none";
-
-                MainActivity mainActivity = (MainActivity) getContext();
-                if (mainActivity == null)
-                    return;
-
-                mainActivity.getUhcTcpSender().scene(newScene);
-            }
-        });
-
-        button = (Button) view.findViewById(R.id.movieButton);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String newScene = "movie";
-                if (newScene.equals(currentScene))
-                    newScene = "none";
-
-                MainActivity mainActivity = (MainActivity) getContext();
-                if (mainActivity == null)
-                    return;
-
-                mainActivity.getUhcTcpSender().scene(newScene);
-            }
-        });
     }
 
     @Override
@@ -146,28 +111,6 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
         zWaveList.recreateElements(containerLayout, mainActivity);
     }
 
-    private void setHighlightOnButton(@NonNull View rootView, int buttonId, boolean shouldHighlight) {
-        Button button = (Button) rootView.findViewById(buttonId);
-        if (button == null)
-            return;
-
-        if (shouldHighlight)
-            button.setTextColor(getResources().getColor(R.color.colorAccent));
-        else
-            button.setTextColor(getResources().getColor(android.R.color.primary_text_light));
-    }
-
-    private void updateSceneButtons(final String scene) {
-        View rootView = getView();
-        if (rootView == null) {
-            Log.d("LightsShadesFragment", "updateSceneButtons - rootView is null");
-            return;
-        }
-
-        setHighlightOnButton(rootView, R.id.cozyButton, "cozy".equals(scene));
-        setHighlightOnButton(rootView, R.id.movieButton, "movie".equals(scene));
-    }
-
     @Override
     public void zWaveGotNodes() {
         recreateSwitches();
@@ -193,24 +136,27 @@ public class LightsShadesFragment extends Fragment implements StateUpdateListene
     }
 
     @Override
-    public void kodiClearPlaylist() {
+    public void kodiOnStop() {
     }
 
     @Override
-    public void kodiAddPlaylistItem(int position, KodiItem item, int newLength) {
+    public void kodiClearAudioPlaylist() {
     }
 
     @Override
-    public void kodiRemovePlaylistItem(int position, int newLength) {
+    public void kodiPlaylistUpdate(ArrayList<KodiItem> items) {
+    }
+
+    @Override
+    public void kodiAddAudioPlaylistItem(int position, int songid) {
+    }
+
+    @Override
+    public void kodiRemoveAudioPlaylistItem(int position) {
     }
 
     @Override
     public void stateChanged(JsonState state) {
-        if (state == null)
-            return;
-
-        updateSceneButtons(state.scene());
-        currentScene = state.scene();
     }
 
     public void onUhcStateCreated(UhcState uhcState) {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="action_playpause">Lejátszás/Szünet</string>
+    <string name="action_settings">Beállítások</string>
+    <string name="airconditioner">Légkondícionáló</string>
+    <string name="connecting">Kapcsolódás...</string>
+    <string name="defaultTrackTimes">--:--/--:--</string>
+    <string name="hifi_volume_down">HiFi hangerő le</string>
+    <string name="hifi_volume_up">HiFi hangerő fel</string>
+    <string name="loading">Betöltés...</string>
+    <string name="next_track">Következő szám</string>
+    <string name="pref_header_display">Megjelenés</string>
+    <string name="pref_header_connection">Kapcsolat</string>
+    <string name="pref_title_hostname">Kiszolgáló</string>
+    <string name="pref_title_port">Port</string>
+    <string name="pref_title_wakeup_zone">Képernyőt felélesztő zóna száma</string>
+    <string name="pref_wakeup">Képernyő automatikus bekapcsolása</string>
+    <string name="pref_wakeup_summ">Képernyő bekapcsol mozgás esetén</string>
+    <string name="previous_track">Előző szám</string>
+    <string name="projector">Projektor</string>
+    <string name="str_media_volume">Média hangerő</string>
+    <string name="title_activity_settings">Beállítások</string>
+</resources>

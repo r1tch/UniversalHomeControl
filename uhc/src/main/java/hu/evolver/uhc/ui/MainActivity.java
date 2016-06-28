@@ -16,11 +16,9 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import hu.evolver.uhc.R;
 import hu.evolver.uhc.comm.KodiConnection;
-import hu.evolver.uhc.comm.KodiTcpSender;
 import hu.evolver.uhc.comm.UhcConnectivityService;
 import hu.evolver.uhc.comm.UhcTcpSender;
 import hu.evolver.uhc.comm.ZWaveTcpSender;
@@ -72,9 +70,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (uhcConnectivityService == null || !uhcConnectivityService.isConnected()) {
             playPauseMenuItem.setVisible(false);
-        } else if (uhcConnectivityService != null && uhcConnectivityService.getUhcState().isPlaying()) {
-            playPauseMenuItem.setIcon(R.drawable.ic_pause_white_24dp);
-            playButtonState = PlayButtonState.Playing;
         }
 
         return true;
@@ -146,11 +141,6 @@ public class MainActivity extends AppCompatActivity {
             else
                 onTcpDisconnected();
 
-            if (uhcState.isPlaying())
-                onPlaying();
-            else
-                onStoppedPaused();
-
             onStateChanged(uhcState.getState());
         }
 
@@ -205,6 +195,16 @@ public class MainActivity extends AppCompatActivity {
                 uhcConnectivityService.getKodiConnection().stopOtherPlayersIfRequired();
                 return true;
             }
+
+            return true;
+        }
+
+        if (id == R.id.action_guestmode) {
+            if (uhcConnectivityService == null)
+                return true;
+
+            // TODO check if this is the state after
+            uhcConnectivityService.getUhcTcpSender().setGuestMode(item.isChecked());
 
             return true;
         }
@@ -301,12 +301,17 @@ public class MainActivity extends AppCompatActivity {
 
         if (state.isAtHome())
             toolbar.setLogo(R.drawable.ic_home_white_24dp);
-        else if (state.isGuestHost())
+        else if (state.isGuestMode())
             toolbar.setLogo(R.drawable.ic_remove_circle_white_24dp);
         else if (state.isAsleep())
             toolbar.setLogo(R.drawable.ic_airline_seat_individual_suite_white_24dp);
         else
             toolbar.setLogo(R.drawable.ic_lock_white_24dp);
+
+        if (optionsMenu != null) {
+            MenuItem guestMode = optionsMenu.findItem(R.id.action_guestmode);
+            guestMode.setChecked(state.isGuestMode());
+        }
     }
 
     /**

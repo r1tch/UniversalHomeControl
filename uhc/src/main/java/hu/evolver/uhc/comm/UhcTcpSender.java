@@ -84,12 +84,12 @@ public class UhcTcpSender {
         sendJsonObject(jo);
     }
 
-    public void scene(final String scene) {
+    public void setGuestMode(final boolean onOff) {
         JSONObject jo = new JSONObject();
         try {
-            jo.put("service", "scene");
-            jo.put("msg", "selectScene");
-            jo.put("scene", scene);
+            jo.put("service", "autoshade");
+            jo.put("msg", "setGuestMode");
+            jo.put("setTo", onOff);
         } catch (JSONException e) {
             Log.e("UhcTcpSender", "Json exception:" + e.getMessage());
         }

@@ -94,6 +94,28 @@ public class KodiTcpSender {
         }
     }
 
+    public void sendSetRepeat(int playerid, String repeat) {
+        try {
+            JSONObject params = new JSONObject();
+            params.put("repeat", repeat);
+            params.put("playerid", playerid);
+            sendMethodWithParams("Player.SetRepeat", params);
+        } catch (JSONException e) {
+            Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
+        }
+    }
+
+    public void sendSetShuffle(int playerid, boolean shuffle) {
+        try {
+            JSONObject params = new JSONObject();
+            params.put("shuffle", shuffle);
+            params.put("playerid", playerid);
+            sendMethodWithParams("Player.SetShuffle", params);
+        } catch (JSONException e) {
+            Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
+        }
+    }
+
     public void sendSetVolume(final int volumePercent) {
         try {
             JSONObject params = new JSONObject();
@@ -246,4 +268,5 @@ public class KodiTcpSender {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
     }
+
 }

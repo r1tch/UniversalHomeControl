@@ -104,6 +104,18 @@ public class KodiPlayers {
         getFullUpdate();
     }
 
+    public boolean isAudioPlayerShuffleOn() {
+        if (audioPlayer == null)
+            return false;
+        return  audioPlayer.shuffled;
+    }
+
+    public String getAudioPlayerRepeat() {
+        if (audioPlayer == null)
+            return "off";
+        return audioPlayer.repeat;
+    }
+
     public void getFullUpdate() {
         kodiTcpSender.sendGetActivePlayers();
         for (int i = 0; i < 5; ++i)        // pretty arbitrary, given that currently there are 3 players, most probably querying 10 is enough
@@ -249,5 +261,17 @@ public class KodiPlayers {
 
     public void onSeek(int playerid) {
         kodiTcpSender.sendPlayerGetProperties(playerid);
+    }
+
+    public void setAudioRepeat(String repeat) {
+        if (audioPlayer == null)
+            return;
+        kodiTcpSender.sendSetRepeat(audioPlayer.id, repeat);
+    }
+
+    public void setAudioShuffle(boolean shuffle) {
+        if (audioPlayer == null)
+            return;
+        kodiTcpSender.sendSetShuffle(audioPlayer.id, shuffle);
     }
 }

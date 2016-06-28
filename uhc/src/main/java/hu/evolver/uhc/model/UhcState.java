@@ -6,6 +6,7 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -26,11 +27,6 @@ public class UhcState implements KodiUpdateListener {
     private MainActivityDispatcher mainActivityDispatcher = null;
     private KodiConnection kodiConnection = null;
     private JsonState state = null;
-    boolean isPlaying = false;
-
-    public boolean isPlaying() {
-        return isPlaying;
-    }
 
     public UhcState(SimpleTcpClient simpleTcpClient, MainActivityDispatcher mainActivityDispatcher) {
         this.mainActivityDispatcher = mainActivityDispatcher;
@@ -241,34 +237,57 @@ public class UhcState implements KodiUpdateListener {
     }
 
     @Override
-    public void kodiClearPlaylist() {
+    public void kodiClearAudioPlaylist() {
         mainActivityDispatcher.dispatch(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
-                    listener.kodiClearPlaylist();
+                    listener.kodiClearAudioPlaylist();
             }
         });
     }
 
     @Override
-    public void kodiAddPlaylistItem(final int position, final KodiItem item, final int newLength) {
+    public void kodiPlaylistUpdate(final ArrayList<KodiItem> items) {
         mainActivityDispatcher.dispatch(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
-                    listener.kodiAddPlaylistItem(position, item, newLength);
+                    listener.kodiPlaylistUpdate(items);
             }
         });
     }
 
     @Override
-    public void kodiRemovePlaylistItem(final int position, final int newLength) {
+    public void kodiAddAudioPlaylistItem(final int position, final int itemid) {
         mainActivityDispatcher.dispatch(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
-                    listener.kodiRemovePlaylistItem(position, newLength);
+                    listener.kodiAddAudioPlaylistItem(position, itemid);
+            }
+        });
+    }
+
+    @Override
+    public void kodiRemoveAudioPlaylistItem(final int position) {
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                for (StateUpdateListener listener : listeners)
+                    listener.kodiRemoveAudioPlaylistItem(position);
+            }
+        });
+    }
+
+
+    @Override
+    public void kodiOnStop() {
+        mainActivityDispatcher.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                for (StateUpdateListener listener : listeners)
+                    listener.kodiOnStop();
             }
         });
     }

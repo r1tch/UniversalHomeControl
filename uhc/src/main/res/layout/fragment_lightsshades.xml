@@ -14,33 +14,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_horizontal"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/cozyButton"
-                style="@style/Base.Widget.AppCompat.Button.Borderless"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawableLeft="@drawable/ic_weekend_black_24dp"
-                android:text="@string/cozy_mode"
-                android:padding="32dp" />
-
-            <Button
-                android:id="@+id/movieButton"
-                style="@style/Base.Widget.AppCompat.Button.Borderless"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:drawableLeft="@drawable/ic_movie_black_24dp"
-                android:text="@string/movie_mode"
-                android:padding="32dp" />
         </LinearLayout>
     </LinearLayout>
-
 </ScrollView>

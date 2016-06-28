@@ -14,7 +14,6 @@ import hu.evolver.uhc.model.KodiPlaylist;
  */
 public class KodiConnection {
     private KodiUpdateListener updateListener = null;
-    private SimpleTcpClient simpleTcpClient = null;
     private KodiTcpSender kodiTcpSender = null;
     private KodiPlaylist kodiPlaylist = null;
     private KodiPlayers kodiPlayers = null;
@@ -25,7 +24,6 @@ public class KodiConnection {
 
     public KodiConnection(KodiUpdateListener updateListener, SimpleTcpClient simpleTcpClient) {
         this.updateListener = updateListener;
-        this.simpleTcpClient = simpleTcpClient;
         this.kodiTcpSender = new KodiTcpSender(simpleTcpClient);
         this.kodiPlaylist = new KodiPlaylist(updateListener, kodiTcpSender);
         this.kodiPlayers = new KodiPlayers(updateListener, kodiTcpSender, kodiPlaylist);
@@ -49,6 +47,22 @@ public class KodiConnection {
         // for sources, logic could be: 1) get sources; if single returned, get directory too & populate "root" with that
         //     (ie if dir list received & root empty -> make this the root)
         // later when selecting files: remember last dir requested, wait for it...
+    }
+
+    public boolean isAudioPlayerShuffleOn() {
+        return kodiPlayers.isAudioPlayerShuffleOn();
+    }
+
+    public String getAudioPlayerRepeat() {
+        return kodiPlayers.getAudioPlayerRepeat();
+    }
+
+    public void setAudioRepeat(String repeat) {
+        kodiPlayers.setAudioRepeat(repeat);
+    }
+
+    public void setAudioShuffle(boolean shuffle) {
+        kodiPlayers.setAudioShuffle(shuffle);
     }
 
     public void newUpdate(JSONObject jsonObject) {
@@ -115,11 +129,20 @@ public class KodiConnection {
             parseOnStop();
         } else if ("Player.OnSeek".equals(method)) {
             parseOnSeek(jsonObject.optJSONObject("params"));
+        } else if ("Playlist.OnClear".equals(method)) {
+            updateListener.kodiClearAudioPlaylist();
         } else if ("Application.OnVolumeChanged".equals(method)) {
             parseOnVolumeChanged(jsonObject);
             return;
-        }
+        } else if ("Playlist.OnAdd".equals(method)) {
+            parseOnAdd(jsonObject.optJSONObject("params"));
+            return;
+        } else if ("Playlist.OnRemove".equals(method)) {
+            parseOnRemove(jsonObject.optJSONObject("params"));
+            return;
+        } else if ("Playlist.OnRemove".equals(method)) {
 
+        }
     }
 
     private void parsePlayerItem(JSONObject resultObject) {
@@ -176,8 +199,8 @@ public class KodiConnection {
     }
 
     private void parseOnStop() {
+        updateListener.kodiOnStop();
         kodiPlayers.getFullUpdate();
-        // updateListener.kodiAudioStopped();
     }
 
     private void parseOnSeek(JSONObject params) {
@@ -190,6 +213,40 @@ public class KodiConnection {
             kodiPlayers.onSeek(playerid);
         } catch (JSONException e) {
             Log.e("KodiConnection", "parseOnSeek - " + e.toString());
+        }
+    }
+
+    private void parseOnAdd(JSONObject params) {
+        if (params == null)
+            return;
+
+        try {
+            int playlistid = params.getJSONObject("data").getInt("playlistid");
+            if (playlistid != kodiPlaylist.getAudioPlaylistId())
+                return;
+
+            // note: id might be missing if item unknown!
+            int itemid = params.getJSONObject("data").getJSONObject("item").optInt("id", -1);
+            int position = params.getJSONObject("data").getInt("position");
+            updateListener.kodiAddAudioPlaylistItem(position, itemid);
+        } catch (JSONException e) {
+            Log.e("KodiConnection", "parseOnAdd - " + e.toString());
+        }
+    }
+
+    private void parseOnRemove(JSONObject params) {
+        if (params == null)
+            return;
+
+        try {
+            int playlistid = params.getJSONObject("data").getInt("playlistid");
+            if (playlistid != kodiPlaylist.getAudioPlaylistId())
+                return;
+
+            int position = params.getJSONObject("data").getInt("position");
+            updateListener.kodiRemoveAudioPlaylistItem(position);
+        } catch (JSONException e) {
+            Log.e("KodiConnection", "parseOnAdd - " + e.toString());
         }
     }
 

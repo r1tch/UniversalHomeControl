@@ -3,7 +3,6 @@ package hu.evolver.uhc.model;
 import android.util.Log;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -60,8 +59,9 @@ public class KodiPlaylist {
     public void onGetItems(final JSONArray items) {
         if (items == null)
             return;
+        Log.d("KodiPlaylist", "onGetItems");
 
-        updateListener.kodiClearPlaylist();
+        ArrayList<KodiItem> itemArrayList = new ArrayList<>(items.length());
 
         for (int i = 0; i < items.length(); ++i) {
             JSONObject itemJSON = items.optJSONObject(i);
@@ -69,9 +69,10 @@ public class KodiPlaylist {
                 return;
 
             KodiItem item = new KodiItem(itemJSON);
-            int currentNewLength = i + 1;
-            updateListener.kodiAddPlaylistItem(i, item, currentNewLength);
+            itemArrayList.add(item);
         }
+
+        updateListener.kodiPlaylistUpdate(itemArrayList);
     }
 
     public void clear() {

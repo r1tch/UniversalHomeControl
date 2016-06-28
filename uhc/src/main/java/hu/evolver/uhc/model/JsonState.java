@@ -45,9 +45,7 @@ public class JsonState {
         return state.optBoolean("asleep");
     }
 
-    public boolean isGuestHost() { return state.optBoolean("guestHost"); }
-
-    public String scene() { return state.optString("scene"); }
+    public boolean isGuestMode() { return state.optBoolean("guestMode"); }
 
     public AirconditionerState getAirconditionerState() {
         return new AirconditionerState(state.optBoolean("acOn"), state.optString("acMode"));
@@ -60,6 +58,5 @@ public class JsonState {
         } catch (JSONException e) {
             Log.e("JsonState", "Can't set AC state: " + e);
         }
-
     }
 }

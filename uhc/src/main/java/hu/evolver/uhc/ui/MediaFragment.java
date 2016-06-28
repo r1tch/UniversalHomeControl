@@ -19,6 +19,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 import hu.evolver.uhc.R;
 import hu.evolver.uhc.comm.KodiConnection;
 import hu.evolver.uhc.model.JsonState;
@@ -31,8 +33,10 @@ import hu.evolver.uhc.model.UhcState;
  * Created by rroman on 5/31/16.
  */
 public class MediaFragment extends Fragment implements StateUpdateListener {
+    private static final String EMPTY_TRACKTIMES = "--:--/--:--";
     private boolean isCreated = false;
-    private Handler updateHandler = null;
+    private Handler updateRequesterHandler = null;
+    private Handler playlistDisplayUpdateHandler = null;
     private int lastKnownPosition = -1;
 
     @Nullable
@@ -40,7 +44,8 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         Log.d("MediaFragment", "onCreateView");
 
-        updateHandler = new Handler();
+        updateRequesterHandler = new Handler();
+        playlistDisplayUpdateHandler = new Handler();
 
         View rootView = inflater.inflate(R.layout.fragment_media, container, false);
 
@@ -52,8 +57,8 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
         Log.d("MediaFragment", "onDestroyView");
         isCreated = false;
 
-        updateHandler.removeCallbacksAndMessages(null);
-        updateHandler = null;
+        updateRequesterHandler.removeCallbacksAndMessages(null);
+        updateRequesterHandler = null;
 
         super.onDestroyView();
 
@@ -178,6 +183,69 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
                 kodiConnection.onNextTrack();
             }
         });
+
+        ImageButton repeatButton = (ImageButton) rootView.findViewById(R.id.repeatButton);
+        repeatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                KodiConnection kodiConnection = getKodiConnection();
+                if (kodiConnection == null)
+                    return;
+
+                if ("off".equals(kodiConnection.getAudioPlayerRepeat())) {
+                    kodiConnection.setAudioRepeat("all");
+                    updateRepeatButton((ImageButton)v, "all");
+                } else if ("all".equals(kodiConnection.getAudioPlayerRepeat())) {
+                    kodiConnection.setAudioRepeat("one");
+                    updateRepeatButton((ImageButton)v, "one");
+                } else if ("one".equals(kodiConnection.getAudioPlayerRepeat())) {
+                    kodiConnection.setAudioRepeat("off");
+                    updateRepeatButton((ImageButton)v, "off");
+                }
+
+                kodiConnection.sendUpdateRequest();  // well, this updates active player only
+            }
+        });
+
+        ImageButton shuffleButton = (ImageButton) rootView.findViewById(R.id.shuffleButton);
+        shuffleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                KodiConnection kodiConnection = getKodiConnection();
+                if (kodiConnection == null)
+                    return;
+
+                if (kodiConnection.isAudioPlayerShuffleOn()) {
+                    kodiConnection.setAudioShuffle(false);
+                    setHighlightOnImageButton((ImageButton)v, false);
+                } else {
+                    kodiConnection.setAudioShuffle(true);
+                    setHighlightOnImageButton((ImageButton)v, true);
+                }
+
+                kodiConnection.sendUpdateRequest();  // well, this updates active player only
+            }
+        });
+    }
+
+    private void updateRepeatButton(ImageButton button, String repeat) {
+        if ("off".equals(repeat)) {
+            button.setImageResource(R.drawable.ic_repeat_black_24dp);
+            setHighlightOnImageButton(button, false);
+        } else if ("one".equals(repeat)) {
+            button.setImageResource(R.drawable.ic_repeat_one_black_24dp);
+            setHighlightOnImageButton(button, true);
+        } else if ("all".equals(repeat)) {
+            button.setImageResource(R.drawable.ic_repeat_black_24dp);
+            setHighlightOnImageButton(button, true);
+        }
+    }
+
+    private void setHighlightOnImageButton(final ImageButton button, boolean shouldHighlight) {
+        if (shouldHighlight)
+            button.setColorFilter(getResources().getColor(R.color.colorAccent));
+        else
+            button.setColorFilter(0);
     }
 
     private KodiConnection getKodiConnection() {
@@ -219,6 +287,14 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
         if ("picture".equals(player.type))
             return;
 
+        if ("audio".equals(player.type)) {
+            ImageButton repeatButton = (ImageButton) rootView.findViewById(R.id.repeatButton);
+            updateRepeatButton(repeatButton, player.repeat);
+
+            ImageButton shuffleButton = (ImageButton) rootView.findViewById(R.id.shuffleButton);
+            setHighlightOnImageButton(shuffleButton, player.shuffled);
+        }
+
         if (!player.isActive)
             return;
 
@@ -229,21 +305,16 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
         TextView trackTimesTextView = (TextView) rootView.findViewById(R.id.trackTimes);
 
         if (player.isPlaying())
-            scheduleNewUpdate();
+            scheduleNewUpdateRequest();
 
-        String trackTimes;
-        if (player.isStopped()) {
-            trackTimes = "--:--/--:--";
-            kodiPlayingItem("");            // on stop, clear item's name
-        } else
-            trackTimes = player.time + "/" + player.totaltime;
+        if (player.isStopped())
+            kodiOnStop();
+        else
+            trackTimesTextView.setText(player.time + "/" + player.totaltime);
 
-        trackTimesTextView.setText(trackTimes);
 
         updateAudioPosition(rootView, player.position);
-
         // TODO try what needs to be done when 'live' is true
-        // TODO shuffle, repeat
     }
 
     private void updateAudioPosition(@NonNull View rootView, int position) {
@@ -274,57 +345,84 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
     }
 
     @Override
-    public void kodiClearPlaylist() {
+    public void kodiOnStop() {
         View rootView = getView();
         if (rootView == null) {
-            Log.d("MediaFragment", "kodiClearPlaylist - rootView is null");
+            Log.d("MediaFragment", "kodiOnStop - rootView is null");
             return;
         }
 
+        SeekBar trackPositionSeekBar = (SeekBar) rootView.findViewById(R.id.trackPositionSeekBar);
+        trackPositionSeekBar.setProgress(0);
+
+        TextView trackTimesTextView = (TextView) rootView.findViewById(R.id.trackTimes);
+        trackTimesTextView.setText(EMPTY_TRACKTIMES);
+
+        kodiPlayingItem("");
+    }
+
+    @Override
+    public void kodiClearAudioPlaylist() {
+        View rootView = getView();
+        if (rootView == null) {
+            Log.d("MediaFragment", "kodiClearAudioPlaylist - rootView is null");
+            return;
+        }
+
+        Log.d("MediaFragment", "kodiClearAudioPlaylist");
         LinearLayout tracklistContainerLayout = (LinearLayout) rootView.findViewById(R.id.trackListContainerLayout);
         tracklistContainerLayout.removeAllViews();
     }
 
+
     @Override
-    public void kodiAddPlaylistItem(int position, KodiItem item, int newLength) {
+    public void kodiAddAudioPlaylistItem(int position, int songid) {
+        scheduleNewPlaylistDisplayUpdateRequest();
+    }
+
+    @Override
+    public void kodiPlaylistUpdate(ArrayList<KodiItem> items) {
         View rootView = getView();
         if (rootView == null) {
-            Log.d("MediaFragment", "kodiClearPlaylist - rootView is null");
+            Log.d("MediaFragment", "kodiClearAudioPlaylist - rootView is null");
             return;
         }
 
         LinearLayout tracklistContainerLayout = (LinearLayout) rootView.findViewById(R.id.trackListContainerLayout);
-        int countPlusOne = tracklistContainerLayout.getChildCount() + 1;
-        if (countPlusOne != newLength) {
-            Log.e("MediaFragment", "kodiAddPlaylistItem #" + position + ", expected newLength:" + newLength
-                    + ", but would result in length:" + countPlusOne);
-            KodiConnection kodiConnection = getKodiConnection();
-            kodiConnection.sendPlaylistUpdateRequest();         // something bad happened, try getting info again, repopulate full playlist
-            return;
-        }
 
-        MainActivity mainActivity = (MainActivity) rootView.getContext();
-        tracklistContainerLayout.addView(new ItemDisplay(mainActivity, item, position), position);
+        tracklistContainerLayout.removeAllViews();
+        for (int i = 0; i < items.size(); ++i) {
+            MainActivity mainActivity = (MainActivity) rootView.getContext();
+            tracklistContainerLayout.addView(new ItemDisplay(mainActivity, items.get(i), i));
+        }
     }
 
     @Override
-    public void kodiRemovePlaylistItem(int position, int newLength) {
+    public void kodiRemoveAudioPlaylistItem(int position) {
+        scheduleNewPlaylistDisplayUpdateRequest();
+
+        /* -- in case we want to implement this properly some time
+
+        // problem here is with race conditions: when we get a remove item instruction, the position might already be outdated
+        //
+
         View rootView = getView();
         if (rootView == null) {
-            Log.d("MediaFragment", "kodiClearPlaylist - rootView is null");
+            Log.d("MediaFragment", "kodiClearAudioPlaylist - rootView is null");
             return;
         }
 
         LinearLayout tracklistContainerLayout = (LinearLayout) rootView.findViewById(R.id.trackListContainerLayout);
         int countMinusOne = tracklistContainerLayout.getChildCount() - 1;
         if (countMinusOne != newLength) {
-            Log.e("MediaFragment", "kodiRemovePlaylistItem #" + position + ", expected newLength:" + newLength
+            Log.e("MediaFragment", "kodiRemoveAudioPlaylistItem #" + position + ", expected newLength:" + newLength
                     + ", but would result in length:" + countMinusOne);
             KodiConnection kodiConnection = getKodiConnection();
             kodiConnection.sendPlaylistUpdateRequest();         // something bad happened, try getting info again, repopulate full playlist
             return;
         }
         tracklistContainerLayout.removeViewAt(position);
+        */
     }
 
     @Override
@@ -352,20 +450,37 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
         uhcState.getKodiConnection().sendPlaylistUpdateRequest();
     }
 
-    private void scheduleNewUpdate() {
+    private void scheduleNewUpdateRequest() {
+        updateRequesterHandler.removeCallbacksAndMessages(null); // cancel all
         final KodiConnection kodiConnection = getKodiConnection();
-        if (kodiConnection == null)
+        if (kodiConnection == null) {
             return;
+        }
 
-        updateHandler.removeCallbacksAndMessages(null); // cancel all
 
-        updateHandler.postDelayed(new Runnable() {
+        updateRequesterHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if (!kodiConnection.sendUpdateRequest())
-                    scheduleNewUpdate();
+                    scheduleNewUpdateRequest();
             }
         }, 1000);
+    }
+
+    private void scheduleNewPlaylistDisplayUpdateRequest() {
+
+        playlistDisplayUpdateHandler.removeCallbacksAndMessages(null);  // cancel all previous
+        final KodiConnection kodiConnection = getKodiConnection();
+        if (kodiConnection == null) {
+            return;
+        }
+
+        playlistDisplayUpdateHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                kodiConnection.sendPlaylistUpdateRequest();
+            }
+        }, 100);
     }
 
     private class ItemDisplay extends LinearLayout {
@@ -391,7 +506,7 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
                     if (kodiConnection == null)
                         return;
 
-                    int myPosition = ((LinearLayout)getParent()).indexOfChild(view);
+                    int myPosition = ((LinearLayout) getParent()).indexOfChild(view);
 
                     kodiConnection.openAudioPlaylistPosition(myPosition);
                 }
