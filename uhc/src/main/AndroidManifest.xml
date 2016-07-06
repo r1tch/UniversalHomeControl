@@ -40,6 +40,15 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.MainActivity" />
         </activity>
+        <activity
+            android:name=".ui.MediaBrowserActivity"
+            android:label="@string/title_activity_media_browser"
+            android:parentActivityName=".ui.MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="hu.evolver.uhc.ui.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

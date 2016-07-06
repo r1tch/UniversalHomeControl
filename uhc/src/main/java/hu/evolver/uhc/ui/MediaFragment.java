@@ -1,6 +1,7 @@
 package hu.evolver.uhc.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -224,6 +226,14 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
                 }
 
                 kodiConnection.sendUpdateRequest();  // well, this updates active player only
+            }
+        });
+
+        Button addButton = (Button) rootView.findViewById(R.id.addButton);
+        addButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getContext(), MediaBrowserActivity.class));
             }
         });
     }
@@ -483,18 +493,9 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
         }, 100);
     }
 
-    private class ItemDisplay extends LinearLayout {
-
-        private KodiItem kodiItem = null;
-        private TextView titleTextView = null;
-
+    private class ItemDisplay extends KodiItemDisplay {
         public ItemDisplay(final MainActivity mainActivity, final KodiItem kodiItem, int position) {
-            super(mainActivity);
-            this.kodiItem = kodiItem;
-            setupLayout();
-            this.addView(createIcon());
-            this.addView(createTitleArtist());
-            this.addView(createDuration());
+            super(mainActivity, kodiItem);
 
             if (lastKnownPosition == position)
                 playing();
@@ -511,94 +512,16 @@ public class MediaFragment extends Fragment implements StateUpdateListener {
                     kodiConnection.openAudioPlaylistPosition(myPosition);
                 }
             });
-            // TODO longpress listener
+
+            setOnLongClickListener(new OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    // TODO display dialog for other actions...
+                    // TODO dismiss modal dialog when playlist changes!
+                    return false;
+                }
+            });
         }
 
-        public void notPlaying() {
-            titleTextView.setTypeface(null, Typeface.NORMAL);
-        }
-
-        public void playing() {
-            titleTextView.setTypeface(null, Typeface.BOLD);
-        }
-
-        private void setupLayout() {
-            this.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            this.setLayoutParams(params);
-        }
-
-        private View createIcon() {
-            // TODO directory, stream icons?
-            ImageView imageView = new ImageView(getContext());
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0f);
-            params.gravity = Gravity.CENTER_VERTICAL;
-            imageView.setLayoutParams(params);
-            imageView.setImageResource(R.drawable.ic_music_note_black_24dp);
-            imageView.setColorFilter(Color.rgb(0x85, 0x85, 0x85));      // TODO get color from theme's default text color
-            final int sidePad = (int) getResources().getDimension(R.dimen.list_icon_side_padding);
-            imageView.setPadding(sidePad, 0, sidePad, 0);
-
-            return imageView;
-        }
-
-        private View createTitleArtist() {
-            LinearLayout titleArtistLayout = new LinearLayout(getContext());
-            titleArtistLayout.setOrientation(LinearLayout.VERTICAL);
-
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            titleArtistLayout.setLayoutParams(params);
-
-            params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            titleTextView = new TextView(getContext());
-            titleTextView.setLayoutParams(params);
-            if (!kodiItem.title.isEmpty())
-                titleTextView.setText(kodiItem.title);
-            else if (!kodiItem.label.isEmpty())
-                titleTextView.setText(kodiItem.label);
-            else
-                titleTextView.setText(kodiItem.file);
-
-            titleTextView.setTextAppearance(getContext(), android.R.style.TextAppearance_Medium);
-            titleArtistLayout.addView(titleTextView);
-
-            TextView artistTextView = new TextView(getContext());
-            artistTextView.setLayoutParams(params);
-            artistTextView.setText(kodiItem.artist);
-            artistTextView.setTextAppearance(getContext(), android.R.style.TextAppearance_Small);
-            artistTextView.setTypeface(null, Typeface.ITALIC);
-            titleArtistLayout.addView(artistTextView);
-
-            return titleArtistLayout;
-        }
-
-        private View createDuration() {
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0f);
-            params.gravity = Gravity.CENTER_VERTICAL;
-            TextView durationTextView = new TextView(getContext());
-            durationTextView.setLayoutParams(params);
-            durationTextView.setGravity(Gravity.RIGHT);
-            durationTextView.setText(secsToHhmmss(kodiItem.durationSecs));
-            durationTextView.setTextAppearance(getContext(), android.R.style.TextAppearance_Small);
-            durationTextView.setTypeface(null, Typeface.ITALIC);
-            final int sidePad = (int) getResources().getDimension(R.dimen.list_icon_side_padding);
-            durationTextView.setPadding(sidePad, 0, sidePad, 0);
-
-            return durationTextView;
-        }
-
-
-        private String secsToHhmmss(int totalSeconds) {
-            int seconds = totalSeconds % 60;
-            totalSeconds /= 60;
-            int minutes = totalSeconds % 60;
-            totalSeconds /= 60;
-            int hours = totalSeconds;
-
-            if (hours > 0)
-                return String.format("%d:%02d:%02d", hours, minutes, seconds);
-
-            return String.format("%d:%02d", minutes, seconds);
-        }
     }
 }

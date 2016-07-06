@@ -126,10 +126,26 @@ public class KodiTcpSender {
         }
     }
 
-    public void sendGetDirectory(final String directory) {
+    public void sendGetMusicDirectory(final String directory) {
+        if (directory == null)
+            return;
+
         try {
+            JSONArray properties = new JSONArray("[\"title\", \"album\", \"artist\", \"duration\"]");   // will also send label, file, filetype, type (latter pretty inconsistent, "unknown" if no ID3 tag found)
+            JSONObject sort = new JSONObject();
+            sort.put("order", "ascending");
+            sort.put("method", "file");
+
+            JSONObject limits = new JSONObject();
+            limits.put("end", 200);             // yeah, extract constant -- better, make it configable -- better: pagination...?
+
             JSONObject params = new JSONObject();
             params.put("directory", directory);
+            params.put("media", "music");
+            params.put("properties", properties);
+            params.put("sort", sort);
+            params.put("limits", limits);
+
             sendMethodWithParams("Files.GetDirectory", params);
         } catch (JSONException e) {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
@@ -247,6 +263,37 @@ public class KodiTcpSender {
         }
     }
 
+    public void addToPlaylist(int playlistid, int songid) {
+        try {
+            JSONObject item = new JSONObject();
+            item.put("songid", songid);
+
+            JSONObject params = new JSONObject();
+            params.put("playlistid", playlistid);
+            params.put("item", item);
+            sendMethodWithParams("Playlist.Add", params, Integer.toString(playlistid));
+        } catch (JSONException e) {
+            Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
+        }
+    }
+
+    public void addToPlaylist(int playlistid, String path, boolean isDirectory) {
+        try {
+            JSONObject item = new JSONObject();
+            if (isDirectory)
+                item.put("directory", path);
+            else
+                item.put("file", path);
+
+            JSONObject params = new JSONObject();
+            params.put("playlistid", playlistid);
+            params.put("item", item);
+            sendMethodWithParams("Playlist.Add", params, Integer.toString(playlistid));
+        } catch (JSONException e) {
+            Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
+        }
+    }
+
     public void sendHifiVolUpDown(final boolean isUp) {
         if (isUp)
             sendHifiCommand("hifiVolUp");
@@ -268,5 +315,4 @@ public class KodiTcpSender {
             Log.e("KodiTcpSender", "Json exception:" + e.getMessage());
         }
     }
-
 }

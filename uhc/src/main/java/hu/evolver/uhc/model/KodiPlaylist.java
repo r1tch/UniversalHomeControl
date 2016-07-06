@@ -18,8 +18,6 @@ public class KodiPlaylist {
     private KodiUpdateListener updateListener;
     private KodiTcpSender kodiTcpSender;
 
-    // TODO populate with sources / root dir files;
-    List<KodiItem> storageRoot = new ArrayList<>(); // note: later might want to separate playlist & storage handling?
 
     private int audioPlaylistId = 0;
 
@@ -30,11 +28,6 @@ public class KodiPlaylist {
 
     public int getAudioPlaylistId() {
         return audioPlaylistId;
-    }
-
-    public void addSources(final JSONArray sources) {
-        // TODO
-
     }
 
     public void onGetPlaylists(final JSONArray playlists) {
@@ -74,9 +67,4 @@ public class KodiPlaylist {
 
         updateListener.kodiPlaylistUpdate(itemArrayList);
     }
-
-    public void clear() {
-        storageRoot.clear();
-    }
-
 }

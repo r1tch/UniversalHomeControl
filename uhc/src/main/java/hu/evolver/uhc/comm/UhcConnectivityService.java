@@ -14,7 +14,8 @@ import org.json.JSONObject;
 
 import hu.evolver.uhc.model.UhcState;
 import hu.evolver.uhc.ui.MainActivity;
-import hu.evolver.uhc.ui.MainActivityDispatcher;
+import hu.evolver.uhc.ui.MediaBrowserActivity;
+import hu.evolver.uhc.ui.UiThreadDispatcher;
 import hu.evolver.uhc.ui.PrefWrap;
 
 public class UhcConnectivityService extends Service implements SimpleTcpClient.Listener {
@@ -24,9 +25,9 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     private Handler reconnectHandler = null;
     private final LocalBinder localBinder = new LocalBinder();
     private SimpleTcpClient simpleTcpClient = new SimpleTcpClient(this);
-    private MainActivityDispatcher mainActivityDispatcher = new MainActivityDispatcher();
+    private UiThreadDispatcher uiThreadDispatcher = new UiThreadDispatcher();
     private PrefWrap prefWrap = null;
-    private UhcState uhcState = new UhcState(simpleTcpClient, mainActivityDispatcher);
+    private UhcState uhcState = new UhcState(simpleTcpClient, uiThreadDispatcher);
     private ZWaveTcpSender zWaveTcpSender = new ZWaveTcpSender(simpleTcpClient);
     private UhcTcpSender uhcTcpSender = new UhcTcpSender(simpleTcpClient);
     private ScreenWaker screenWaker = null;
@@ -62,11 +63,19 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     }
 
     public void setMainActivity(MainActivity mainActivity) {
-        mainActivityDispatcher.mainActivity = mainActivity;
+        uiThreadDispatcher.mainActivity = mainActivity;
     }
 
     public void unsetMainActivity() {
-        mainActivityDispatcher.mainActivity = null;
+        uiThreadDispatcher.mainActivity = null;
+    }
+
+    public void setMediaBrowserActivity(MediaBrowserActivity mediaBrowserActivity) {
+        uiThreadDispatcher.mediaBrowserActivity = mediaBrowserActivity;
+    }
+
+    public void unsetMediaBrowserActivity() {
+        uiThreadDispatcher.mediaBrowserActivity = null;
     }
 
     @Override
@@ -80,6 +89,7 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("UhcConnectivityService", "onStartCommand");
         if (intent == null)
             return START_STICKY;  // ???
 
@@ -137,9 +147,9 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
         Log.d("UhcConnectivityService", "Connected.");
         uhcState.onTcpConnected();
 
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             public void run() {
-                mainActivityDispatcher.mainActivity.onTcpConnected();
+                uiThreadDispatcher.mainActivity.onTcpConnected();
             }
         });
     }
@@ -148,9 +158,9 @@ public class UhcConnectivityService extends Service implements SimpleTcpClient.L
     public void onTcpDisconnected(boolean perRequest) {
         Log.d("UhcConnectivityService", "Disconnected.");
 
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             public void run() {
-                mainActivityDispatcher.mainActivity.onTcpDisconnected();
+                uiThreadDispatcher.mainActivity.onTcpDisconnected();
             }
         });
         if (!perRequest)

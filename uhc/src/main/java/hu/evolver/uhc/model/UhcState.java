@@ -9,12 +9,13 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import hu.evolver.uhc.comm.KodiConnection;
 import hu.evolver.uhc.comm.KodiUpdateListener;
 import hu.evolver.uhc.comm.SimpleTcpClient;
-import hu.evolver.uhc.ui.MainActivityDispatcher;
+import hu.evolver.uhc.ui.UiThreadDispatcher;
 
 /**
  * Created by rits on 2016-04-26.
@@ -22,14 +23,14 @@ import hu.evolver.uhc.ui.MainActivityDispatcher;
  * Caches UHC state -- well, handles UHC connectivity, used as a comm interface for the GUI elements
  */
 public class UhcState implements KodiUpdateListener {
-    private Set<StateUpdateListener> listeners = new HashSet<>();       // IMPORTANT, these are all UI listeners, mainActivityDispatcher must be used for notification
+    private Set<StateUpdateListener> listeners = new HashSet<>();       // IMPORTANT, these are all UI listeners, uiThreadDispatcher must be used for notification
     private ZWaveNodeStore zWaveNodeStore = new ZWaveNodeStore();
-    private MainActivityDispatcher mainActivityDispatcher = null;
+    private UiThreadDispatcher uiThreadDispatcher = null;
     private KodiConnection kodiConnection = null;
     private JsonState state = null;
 
-    public UhcState(SimpleTcpClient simpleTcpClient, MainActivityDispatcher mainActivityDispatcher) {
-        this.mainActivityDispatcher = mainActivityDispatcher;
+    public UhcState(SimpleTcpClient simpleTcpClient, UiThreadDispatcher uiThreadDispatcher) {
+        this.uiThreadDispatcher = uiThreadDispatcher;
 
         kodiConnection = new KodiConnection(this, simpleTcpClient);
     }
@@ -80,10 +81,10 @@ public class UhcState implements KodiUpdateListener {
             return;
 
         state = new JsonState(jsonObject);
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
-                mainActivityDispatcher.mainActivity.onStateChanged(state);
+                uiThreadDispatcher.mainActivity.onStateChanged(state);
                 for (StateUpdateListener listener : listeners)
                     listener.stateChanged(state);
             }
@@ -113,13 +114,13 @@ public class UhcState implements KodiUpdateListener {
             tmpStore.add(node);
         }
 
-        if (mainActivityDispatcher.mainActivity == null) {
+        if (uiThreadDispatcher.mainActivity == null) {
             zWaveNodeStore.replaceWith(tmpStore);
             return;
         }
 
         // Note: if gui exists, map modifications must be run in the same thread (or be synchronized, looks uglier)
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
 
@@ -150,7 +151,7 @@ public class UhcState implements KodiUpdateListener {
             final int level = Integer.valueOf(changedLevels.optString(idStr, "0"));
             node.setLevel(level);
 
-            mainActivityDispatcher.dispatch(new Runnable() {
+            uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
                 @Override
                 public void run() {
                     for (StateUpdateListener listener : listeners)
@@ -162,7 +163,7 @@ public class UhcState implements KodiUpdateListener {
 
     @Override
     public void kodiVolumeChanged(final boolean isMuted, final double volumePercent) {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -175,10 +176,10 @@ public class UhcState implements KodiUpdateListener {
     @Override
     public void kodiAudioPlaying() {
         isPlaying = true;
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
-                mainActivityDispatcher.mainActivity.onPlaying();
+                uiThreadDispatcher.mainActivity.onPlaying();
             }
         });
     }
@@ -186,10 +187,10 @@ public class UhcState implements KodiUpdateListener {
     @Override
     public void kodiAudioPaused() {
         isPlaying = false;
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
-                mainActivityDispatcher.mainActivity.onStoppedPaused();
+                uiThreadDispatcher.mainActivity.onStoppedPaused();
             }
         });
 
@@ -198,17 +199,17 @@ public class UhcState implements KodiUpdateListener {
     @Override
     public void kodiAudioStopped() {
         isPlaying = false;
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
-                mainActivityDispatcher.mainActivity.onStoppedPaused();
+                uiThreadDispatcher.mainActivity.onStoppedPaused();
             }
         });
     }*/
 
     @Override
     public void kodiPlayerUpdate(final KodiPlayers.Player player) {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -216,18 +217,18 @@ public class UhcState implements KodiUpdateListener {
 
                 if ("audio".equals(player.type)) {
                     if (player.isPlaying())
-                        mainActivityDispatcher.mainActivity.onPlaying();
+                        uiThreadDispatcher.mainActivity.onPlaying();
                     else
-                        mainActivityDispatcher.mainActivity.onStoppedPaused();
+                        uiThreadDispatcher.mainActivity.onStoppedPaused();
                 } else if (!player.isStopped())
-                    mainActivityDispatcher.mainActivity.otherPlayerActive();
+                    uiThreadDispatcher.mainActivity.otherPlayerActive();
             }
         });
     }
 
     @Override
     public void kodiPlayingItem(final String label) {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -238,7 +239,7 @@ public class UhcState implements KodiUpdateListener {
 
     @Override
     public void kodiClearAudioPlaylist() {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -249,7 +250,7 @@ public class UhcState implements KodiUpdateListener {
 
     @Override
     public void kodiPlaylistUpdate(final ArrayList<KodiItem> items) {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -260,7 +261,7 @@ public class UhcState implements KodiUpdateListener {
 
     @Override
     public void kodiAddAudioPlaylistItem(final int position, final int itemid) {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -271,7 +272,7 @@ public class UhcState implements KodiUpdateListener {
 
     @Override
     public void kodiRemoveAudioPlaylistItem(final int position) {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -283,7 +284,7 @@ public class UhcState implements KodiUpdateListener {
 
     @Override
     public void kodiOnStop() {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
                 for (StateUpdateListener listener : listeners)
@@ -292,13 +293,23 @@ public class UhcState implements KodiUpdateListener {
         });
     }
 
+    @Override
+    public void kodiDirectoryUpdate(final List<KodiItem> kodiItems) {
+        uiThreadDispatcher.dispatchToMediaBrowserActivity(new Runnable() {
+            @Override
+            public void run() {
+                uiThreadDispatcher.mediaBrowserActivity.kodiDirectoryUpdate(kodiItems);
+            }
+        });
+    }
+
     /*
     @Override
     public void otherPlayerActive() {
-        mainActivityDispatcher.dispatch(new Runnable() {
+        uiThreadDispatcher.dispatchToMainActivity(new Runnable() {
             @Override
             public void run() {
-                mainActivityDispatcher.mainActivity.otherPlayerActive();
+                uiThreadDispatcher.mainActivity.otherPlayerActive();
             }
         });
     }

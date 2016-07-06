@@ -20,4 +20,8 @@
     <string name="projector">Projektor</string>
     <string name="str_media_volume">Média hangerő</string>
     <string name="title_activity_settings">Beállítások</string>
+    <string name="add">Hozzáad...</string>
+    <string name="song_added">%1$s hozzáadva.</string>
+    <string name="suspend_actions">Felfüggesztés</string>
+    <string name="title_activity_media_browser">Médiaböngésző</string>
 </resources>

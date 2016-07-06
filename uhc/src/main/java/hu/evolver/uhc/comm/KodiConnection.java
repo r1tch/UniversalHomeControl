@@ -6,6 +6,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import hu.evolver.uhc.model.KodiItem;
 import hu.evolver.uhc.model.KodiPlayers;
 import hu.evolver.uhc.model.KodiPlaylist;
 
@@ -17,10 +21,10 @@ public class KodiConnection {
     private KodiTcpSender kodiTcpSender = null;
     private KodiPlaylist kodiPlaylist = null;
     private KodiPlayers kodiPlayers = null;
+    private KodiRoot kodiRoot = new KodiRoot();
 
     private double volumePercent = 0;
     private boolean isMuted = false;
-    private boolean gettingRoot = false;
 
     public KodiConnection(KodiUpdateListener updateListener, SimpleTcpClient simpleTcpClient) {
         this.updateListener = updateListener;
@@ -41,7 +45,7 @@ public class KodiConnection {
         kodiTcpSender.sendApplicationGetProperties();
         kodiTcpSender.sendGetSourcesMusic();
         kodiPlayers.onTcpConnected();
-        kodiPlaylist.clear();
+        kodiRoot.clear();
         kodiTcpSender.sendGetPlaylists();
 
         // for sources, logic could be: 1) get sources; if single returned, get directory too & populate "root" with that
@@ -87,6 +91,12 @@ public class KodiConnection {
             }
         }
 
+        final JSONObject errorObject = jsonObject.optJSONObject("error");
+        if (errorObject != null) {
+            parseErrorJSON(jsonObject, idMethod, extraId);
+            return;
+        }
+
         final JSONObject resultObject = jsonObject.optJSONObject("result");
         final JSONArray resultArray = jsonObject.optJSONArray("result");
 
@@ -102,6 +112,11 @@ public class KodiConnection {
         } else if ("Player.GetActivePlayers".equals(idMethod)) {
             kodiPlayers.updateActivePlayers(resultArray);
             return;
+        } else if ("Files.GetSources".equals(idMethod)) {
+            gotSources(resultObject);
+            return;
+        } else if ("Files.GetDirectory".equals(idMethod)) {
+            parseGetDirectory(resultObject);
         }
 
         if (resultObject != null) {
@@ -114,11 +129,6 @@ public class KodiConnection {
             return;
         }
 
-        final JSONObject errorObject = jsonObject.optJSONObject("error");
-        if (errorObject != null) {
-            parseErrorJSON(jsonObject);
-            return;
-        }
 
         final String method = jsonObject.optString("method");
         if ("Player.OnPlay".equals(method)) {
@@ -140,8 +150,6 @@ public class KodiConnection {
         } else if ("Playlist.OnRemove".equals(method)) {
             parseOnRemove(jsonObject.optJSONObject("params"));
             return;
-        } else if ("Playlist.OnRemove".equals(method)) {
-
         }
     }
 
@@ -246,11 +254,13 @@ public class KodiConnection {
             int position = params.getJSONObject("data").getInt("position");
             updateListener.kodiRemoveAudioPlaylistItem(position);
         } catch (JSONException e) {
-            Log.e("KodiConnection", "parseOnAdd - " + e.toString());
+            Log.e("KodiConnection", "parseOnRemove - " + e.toString());
         }
     }
 
-    private void parseErrorJSON(JSONObject jsonObject) {
+    private void parseErrorJSON(JSONObject jsonObject, String idMethod, String extraId) {
+        if ("Files.GetDirectory".equals(idMethod))
+            updateListener.kodiDirectoryUpdate(null);
         /*
         try {
             JSONObject data = jsonObject.getJSONObject("error").getJSONObject("data");
@@ -283,12 +293,8 @@ public class KodiConnection {
     }
 
     private void parseResultObject(JSONObject resultObject) {
-        // {..., result: {sources: [{source1}, {source2}] } }
-        final JSONArray sources = resultObject.optJSONArray("sources");
-        if (sources != null)
-            gotSources(sources);
 
-        else if (resultObject.has("muted") && resultObject.has("volume")) {
+        if (resultObject.has("muted") && resultObject.has("volume")) {
             isMuted = resultObject.optBoolean("muted");
             volumePercent = resultObject.optDouble("volume");
             updateListener.kodiVolumeChanged(isMuted, volumePercent);
@@ -310,23 +316,64 @@ public class KodiConnection {
         return;
     }
 
-    private void gotSources(final JSONArray sources) {
+    private void gotSources(final JSONObject resultObject) {
+        // {..., result: {sources: [{source1}, {source2}] } }
+        final JSONArray sources = resultObject.optJSONArray("sources");
+        if (sources == null)
+            return;
+
         if (sources.length() == 0)
             return;
 
+        kodiRoot.clear();
         if (sources.length() > 1) {
-            kodiPlaylist.addSources(sources);
+            for (int i = 0; i < sources.length(); ++i) {
+                JSONObject source = sources.optJSONObject(i);
+                if (source == null)
+                    continue;
+
+                KodiItem kodiItem = new KodiItem(source);
+                kodiItem.filetype = "directory";
+                kodiRoot.addSource(kodiItem);
+            }
             return;
         }
 
-        gettingRoot = true;         // TODO we have no directory processing routine yet; it shall update sources if gettingRoot is true
         try {
             final JSONObject theOnlySource = sources.getJSONObject(0);
+            if (theOnlySource == null)
+                return;
+
             final String directory = theOnlySource.getString("file");
-            kodiTcpSender.sendGetDirectory(directory);
+            kodiTcpSender.sendGetMusicDirectory(directory);
         } catch (JSONException e) {
             Log.e("KodiConnection", "getSources JSONException:" + e.getMessage());
         }
+    }
+
+    private void parseGetDirectory(final JSONObject resultObject) {
+        final JSONArray files = resultObject.optJSONArray("files");
+        if (files == null || files.length() == 0)
+            return;
+
+        List<KodiItem> kodiItems = new ArrayList<KodiItem>(files.length());
+
+        for (int i = 0; i < files.length(); ++i) {
+            JSONObject file = files.optJSONObject(i);
+            if (file == null)
+                continue;
+
+            KodiItem kodiItem = new KodiItem(file);
+            kodiItems.add(kodiItem);
+        }
+
+        if (kodiRoot.isEmpty()) {
+            for (KodiItem kodiItem : kodiItems)
+                kodiRoot.addSource(kodiItem);
+        }
+
+        updateListener.kodiDirectoryUpdate(kodiItems);
+
     }
 
     public void onVolumeSeekBarChange(final int volumePercent) {
@@ -417,5 +464,28 @@ public class KodiConnection {
             return;
 
         kodiTcpSender.sendPlayerGetItem(activePlayerId);
+    }
+
+    public void sendGetDirectory(final String path) {
+        // if empty -> sending pre-cached root contents
+        if (path.isEmpty())
+            updateListener.kodiDirectoryUpdate(kodiRoot.getStorageRoot());
+        else
+            kodiTcpSender.sendGetMusicDirectory(path);
+    }
+
+    public void sendAddToAudioPlaylist(final KodiItem kodiItem) {
+        int audioPlaylistId = kodiPlaylist.getAudioPlaylistId();
+        if (audioPlaylistId == -1) {
+            Log.d("KodiConnection", "No audio playlist");
+            return;
+        }
+
+        if ("song".equals(kodiItem.type) && kodiItem.id != -1)
+            kodiTcpSender.addToPlaylist(audioPlaylistId, kodiItem.id);
+        else if ("directory".equals(kodiItem.filetype))
+            kodiTcpSender.addToPlaylist(audioPlaylistId, kodiItem.file, true);
+        else
+            kodiTcpSender.addToPlaylist(audioPlaylistId, kodiItem.file, false);
     }
 }

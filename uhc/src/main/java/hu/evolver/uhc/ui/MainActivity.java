@@ -150,12 +150,17 @@ public class MainActivity extends AppCompatActivity {
 
             // IMPORTANT, this is not being called !!!
             removeListeners();
-            uhcConnectivityService.unsetMainActivity();
-            uhcConnectivityService = null;
+            if (uhcConnectivityService != null) {
+                uhcConnectivityService.unsetMainActivity();
+                uhcConnectivityService = null;
+            }
         }
     };
 
     private void removeListeners() {
+        if (uhcConnectivityService == null)
+            return;
+
         UhcState uhcState = uhcConnectivityService.getUhcState();
         if (uhcState == null)
             return;
@@ -203,8 +208,7 @@ public class MainActivity extends AppCompatActivity {
             if (uhcConnectivityService == null)
                 return true;
 
-            // TODO check if this is the state after
-            uhcConnectivityService.getUhcTcpSender().setGuestMode(item.isChecked());
+            uhcConnectivityService.getUhcTcpSender().setGuestMode(!item.isChecked());
 
             return true;
         }

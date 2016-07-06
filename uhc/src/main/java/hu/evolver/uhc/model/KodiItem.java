@@ -17,20 +17,29 @@ public class KodiItem {
     public String label = "";
     public String file = "";
     public int durationSecs = 0;
-    public String type = "";
+    public String type = "";            // "song", ...??
+    public String filetype = "";        // file or directory
 
     public KodiItem(JSONObject jsonObject) {
         try {
-            id = jsonObject.optInt("id");
-            album = jsonObject.optString("album");
+            id = jsonObject.optInt("id", id);
+            album = jsonObject.optString("album", album);
             artist = getFirstArtist(jsonObject);
-            title = jsonObject.optString("title");
-            label = jsonObject.optString("label");
+            title = jsonObject.optString("title", title);
+            label = jsonObject.optString("label", label);
             file = jsonObject.getString("file");
-            durationSecs = jsonObject.optInt("duration");
-            type = jsonObject.optString("type");
+            durationSecs = jsonObject.optInt("duration", durationSecs);
+            type = jsonObject.optString("type", type);
+            filetype = jsonObject.optString("filetype", filetype);
         } catch (JSONException e) {
         }
+    }
+
+    public String getLabel() {
+        if (label == null || label.isEmpty())
+            return file;
+
+        return label;
     }
 
     @NonNull

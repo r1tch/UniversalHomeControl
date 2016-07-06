@@ -32,4 +32,6 @@
     <string name="fan_high" translatable="false">Hi</string>
     <string name="suspend_actions">Suspend actions</string>
     <string name="add">Add...</string>
+    <string name="title_activity_media_browser">Media Browser</string>
+    <string name="song_added">%1$s added.</string>
 </resources>
