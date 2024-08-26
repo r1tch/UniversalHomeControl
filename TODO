@@ -1,0 +1,13 @@
+- setGuestMode msg - which service should handle??? autoshade for now...
+- playlist editor:
+  - long-press actions (need doc), mainly remove
+  - 3 buttons: add song, shuffle, repeat
+- password?
+- evolver
+  - periodic update
+  - if http:// address, new code will use that
+
+
+
+
+

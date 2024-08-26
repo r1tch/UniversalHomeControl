@@ -5,3 +5,5 @@
 .DS_Store
 /build
 /captures
+uhc/app-release.apk
+uhc/uhc-release.apk
